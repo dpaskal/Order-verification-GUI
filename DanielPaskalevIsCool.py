@@ -1,4 +1,4 @@
-#usr/bin/python3
+# usr/bin/python3
 
 import re
 import datetime
@@ -17,12 +17,13 @@ def get_filename():
     month = datetime.datetime.now().strftime("%m")
     day = datetime.datetime.now().strftime("%d")
     # strip leading 0 in month or day
-    if month[0] == "0": 
+    if month[0] == "0":
         month = month[1]
-    if day[0] == "0": 
+    if day[0] == "0":
         day = day[1]
-    location = "".join(["C:\\Users\\DPaskalev\\Documents\\REFERENCE PENDING LIST " , month , "-" , day , ".txt"])
-    if not os.path.isfile(location): 
+    location = "".join(["C:\\Users\\DPaskalev\\Documents\\"
+                        "REFERENCE PENDING LIST ", month, "-", day, ".txt"])
+    if not os.path.isfile(location):
         sys.exit("Current pending list missing")
     return location
 
@@ -35,12 +36,12 @@ def print_accessions(search, sort_flag, list_of_worklists):
             if len(i) >= 2:
                 for z in i:
                     output_array.append(z)
-                    
+
     if sort_flag:
         output_array = filter_duplicates(output_array)
     total_count = 0
     for g in output_array:
-        print(g, end = '\n')
+        print(g, end='\n')
         total_count += 1
     print("total_count:", total_count)
 
@@ -53,11 +54,11 @@ def print_tests(search, list_of_tests):
     for i in list_of_tests:
         for j in list_of_tests:
             if j[1] == i[1] and j[2] != i[2]:
-                continue # remove if you want to merge duplicate accessions
+                continue  # remove if you want to merge duplicate accessions
                 i[2] += ', ' + j[2]
                 i[0] += ', ' + j[0]
                 list_of_tests.remove(j)
-        #print("{: <20} {: >10}  {}".format(*i))
+        # print("{: <20} {: >10}  {}".format(*i))
         output_array.append([i[0], i[1]])
 
     import pyperclip
@@ -72,7 +73,7 @@ def print_tests(search, list_of_tests):
     # no filtering duplicates should be done here as duplicates are merged
 
     from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
-                                 QTableWidget,QTableWidgetItem,QVBoxLayout)
+                                 QTableWidget, QTableWidgetItem, QVBoxLayout)
     from PyQt5.QtGui import QIcon
     from PyQt5.QtCore import pyqtSlot, Qt
 
@@ -113,13 +114,13 @@ def print_tests(search, list_of_tests):
             self.tableWidget.setWordWrap(True)
             self.tableWidget.horizontalHeaderItem(3).setTextAlignment(Qt.AlignLeft)
             for i in range(len(list_of_tests)):
-                self.tableWidget.setItem(i,0, QTableWidgetItem(list_of_tests[i][1]))
-                self.tableWidget.setItem(i,1, QTableWidgetItem(list_of_tests[i][3]))
-                self.tableWidget.setItem(i,2, QTableWidgetItem(list_of_tests[i][0]))
-                self.tableWidget.setItem(i,3, QTableWidgetItem(list_of_tests[i][2]))
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(list_of_tests[i][1]))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(list_of_tests[i][3]))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(list_of_tests[i][0]))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(list_of_tests[i][2]))
             self.tableWidget.resizeColumnsToContents()
             self.tableWidget.setSortingEnabled(True)
-            self.tableWidget.move(0,0)
+            self.tableWidget.move(0, 0)
 
             # table selection change
             self.tableWidget.doubleClicked.connect(self.on_click)
