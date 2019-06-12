@@ -111,7 +111,6 @@ def print_tests(search, list_of_tests):
                                                         "Worklist(s)",
                                                         "Pending Tests"])
             self.tableWidget.horizontalHeader().setStretchLastSection(True)
-            self.tableWidget.setWordWrap(True)
             self.tableWidget.horizontalHeaderItem(3).setTextAlignment(Qt.AlignLeft)
             for i in range(len(list_of_tests)):
                 self.tableWidget.setItem(i, 0, QTableWidgetItem(list_of_tests[i][1]))
@@ -119,7 +118,9 @@ def print_tests(search, list_of_tests):
                 self.tableWidget.setItem(i, 2, QTableWidgetItem(list_of_tests[i][0]))
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(list_of_tests[i][2]))
             self.tableWidget.resizeColumnsToContents()
+            self.tableWidget.resizeRowsToContents()
             self.tableWidget.setSortingEnabled(True)
+            self.tableWidget.setWordWrap(True)  # Doesn't do anything what the fuck
             self.tableWidget.move(0, 0)
 
             # table selection change
@@ -215,7 +216,6 @@ def main():
                     next(f)
                     # pass
             pending_list.append(line)
-    
     total_count = 0
     for line in pending_list:
         if "TOTAL FOR WORKLIST" in line:
