@@ -73,7 +73,8 @@ def print_tests(search, list_of_tests):
     # no filtering duplicates should be done here as duplicates are merged
 
     from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
-                                 QTableWidget, QTableWidgetItem, QVBoxLayout)
+                                 QTableWidget, QTableWidgetItem, QVBoxLayout,
+                                 QAbstractItemView)
     from PyQt5.QtGui import QIcon
     from PyQt5.QtCore import pyqtSlot, Qt
 
@@ -117,8 +118,9 @@ def print_tests(search, list_of_tests):
                 self.tableWidget.setItem(i, 1, QTableWidgetItem(list_of_tests[i][3]))
                 self.tableWidget.setItem(i, 2, QTableWidgetItem(list_of_tests[i][0]))
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(list_of_tests[i][2]))
-            self.tableWidget.resizeColumnsToContents()
-            self.tableWidget.resizeRowsToContents()
+                self.tableWidget.resizeRowsToContents()  # widen height to fit tests
+            self.tableWidget.resizeColumnsToContents()   # resize columns once
+            self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # uneditable cells
             self.tableWidget.setSortingEnabled(True)
             self.tableWidget.setWordWrap(True)  # Doesn't do anything what the fuck
             self.tableWidget.move(0, 0)
