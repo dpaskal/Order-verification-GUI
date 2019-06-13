@@ -65,7 +65,6 @@ def print_tests(search, list_of_tests):
     # Puts accessions into clipboard. First value is the FILTER.
     # There are NO DUPLICATES.
     pyperclip.copy(search + ''.join(['\n' + a[1] for a in output_array]))
-
     if len(list_of_tests) == 0:
         print("No matches found for ", search)
     else:
@@ -74,7 +73,7 @@ def print_tests(search, list_of_tests):
 
     from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
                                  QTableWidget, QTableWidgetItem, QVBoxLayout,
-                                 QAbstractItemView)
+                                 QAbstractItemView, QLabel)
     from PyQt5.QtGui import QIcon
     from PyQt5.QtCore import pyqtSlot, Qt
 
@@ -91,16 +90,25 @@ def print_tests(search, list_of_tests):
         def initUI(self):
             self.setWindowTitle(self.title)
             self.setGeometry(self.left, self.top, self.width, self.height)
-            
+            self.createLabel()
             self.createTable()
 
             # Add box layout, add table to box layout and add box layout to widget
             self.layout = QVBoxLayout()
             self.layout.addWidget(self.tableWidget)
+            self.layout.addWidget(self.label)
             self.setLayout(self.layout)
 
             # Show widget
             self.show()
+
+        def createLabel(self):
+            self.label = QLabel()
+            self.label.setTextFormat(Qt.RichText)
+            text = ("***The filter we are searching for is " + search + 
+                    '     The total order count is : ' + str(len(list_of_tests)) +
+                    "***" + " Double clicking entry will copy it to clipboard.")
+            self.label.setText(text)
 
         def createTable(self):
         # Create table
@@ -130,9 +138,9 @@ def print_tests(search, list_of_tests):
         def on_click(self):
             # double click to put selected item into clipboard
             pyperclip.copy(self.tableWidget.selectedItems()[0].text())
-            print("\n")
-            for currentQTableWidgetItem in self.tableWidget.selectedItems():
-                print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
+            # print("\n")
+            # for currentQTableWidgetItem in self.tableWidget.selectedItems():
+            #    print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
     app = QApplication(sys.argv)
     ex = App()
     sys.exit(app.exec_())
