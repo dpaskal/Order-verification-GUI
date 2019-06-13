@@ -120,25 +120,16 @@ def print_tests(search, list_of_tests):
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(list_of_tests[i][2]))
                 self.tableWidget.resizeRowsToContents()  # widen height to fit tests
             self.tableWidget.resizeColumnsToContents()   # resize columns once
-            self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # uneditable cells
+            self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
             self.tableWidget.setSortingEnabled(True)
             self.tableWidget.setWordWrap(True)  # Doesn't do anything what the fuck
             self.tableWidget.move(0, 0)
-
             # table selection change
             self.tableWidget.doubleClicked.connect(self.on_click)
-
-            # make uneditable
-            # rows = self.tableWidget.rowCount()
-            # columns = self.tableWidget.columnCount()
-            # for i in range(rows):
-            # 	for j in range(columns):
-            # 		item = self.cell("text")
-            # 		# execute the line below to every item you need locked
-            # 		item.setFlags(QtCore.Qt.ItemIsEnabled)
-            # 		self.ui.tableName.setItem(i, j, item)
         @pyqtSlot()
         def on_click(self):
+            # double click to put selected item into clipboard
+            pyperclip.copy(self.tableWidget.selectedItems()[0].text())
             print("\n")
             for currentQTableWidgetItem in self.tableWidget.selectedItems():
                 print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
