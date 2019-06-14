@@ -93,25 +93,29 @@ def print_tests(search, list_of_tests):
             self.createLabel()
             self.createTable()
 
-            # Add box layout, add table to box layout and add box layout to widget
+            # Add box layout, 
+            # add table to box layout
+            # add label to box layout
+            # and add box layout to widget
             self.layout = QVBoxLayout()
-            self.layout.addWidget(self.tableWidget)
             self.layout.addWidget(self.label)
+            self.layout.addWidget(self.tableWidget)
             self.setLayout(self.layout)
 
             # Show widget
             self.show()
 
         def createLabel(self):
+            # label with general information.
             self.label = QLabel()
-            self.label.setTextFormat(Qt.RichText)
-            text = ("***The filter we are searching for is " + search + 
-                    '     The total order count is : ' + str(len(list_of_tests)) +
-                    "***" + " Double clicking entry will copy it to clipboard.")
+            self.label.setTextFormat(Qt.PlainText)
+            text = ("The worklist(s) we are searching for is **" + search + 
+                    '** The total order count is : ' + str(len(list_of_tests)) +
+                    "\nDouble clicking an entry will copy it to clipboard.")
             self.label.setText(text)
 
         def createTable(self):
-        # Create table
+            # Create table with accession info.
             self.tableWidget = QTableWidget()
             self.tableWidget.setRowCount(len(list_of_tests))
             self.tableWidget.setColumnCount(4)
@@ -156,35 +160,6 @@ def check_accession(accession, list_of_tests):
             return len(list_of_tests[:i])
         else:
             return False
-
-
-class Accession:
-    def __init__(self, accession, name, dob, client, date, tests):
-        self.accession = accession
-        self.name = name
-        self.dob = dob
-        self.client = client
-        self.date = date
-        #is there a way to enforce tests variable type?
-        self.tests = []
-        self.tests.append(tests)
-    
-    def get_tests(self):
-        #return a string containing the tests in format "test1, test2, test3"
-        return ", ".join(self.tests)
-    
-    def __str__(self):
-        #to string operator. Returns a string with the accession in it
-        return ("This is an object contain the information for the following accession:\n", accession) 
-        
-    def printpatient(self):
-        print(accession, '\n', 
-                    name,'\n', 
-                    dob,'\n', 
-                    client,'\n', 
-                    date,'\n', 
-                    #comment,'\n',
-                    self.get_tests(),'\n')
 
 
 def main():
