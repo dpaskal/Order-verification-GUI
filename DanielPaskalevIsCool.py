@@ -21,7 +21,7 @@ def get_filename():
         month = month[1]
     if day[0] == "0":
         day = day[1]
-    location = "".join(["C:\\Users\\DPaskalev\\Documents\\"
+    location = "".join(["C:\\Users\\" + os.getlogin() + "\\Documents\\"
                         "REFERENCE PENDING LIST ", month, "-", day, ".txt"])
     if not os.path.isfile(location):
         sys.exit("Current pending list missing")
@@ -84,15 +84,14 @@ def print_tests(search, list_of_tests):
             self.left = 0
             self.top = 0
             self.width = 800
-            self.height = 950
+            self.height = 920
             self.initUI()
-            
+
         def initUI(self):
             self.setWindowTitle(self.title)
             self.setGeometry(self.left, self.top, self.width, self.height)
             self.createLabel()
             self.createTable()
-
             # Add box layout, 
             # add table to box layout
             # add label to box layout
@@ -101,7 +100,6 @@ def print_tests(search, list_of_tests):
             self.layout.addWidget(self.label)
             self.layout.addWidget(self.tableWidget)
             self.setLayout(self.layout)
-
             # Show widget
             self.show()
 
@@ -110,7 +108,7 @@ def print_tests(search, list_of_tests):
             self.label = QLabel()
             self.label.setTextFormat(Qt.PlainText)
             text = ("The worklist(s) we are searching for is **" + search + 
-                    '** The total order count is : ' + str(len(list_of_tests)) +
+                    '** The total order count is: ' + str(len(list_of_tests)) +
                     "\nDouble clicking an entry will copy it to clipboard.")
             self.label.setText(text)
 
@@ -214,7 +212,6 @@ def main():
             line = line[9:].strip()
             line = line.split('/', 1)[0]
             worklist.append(line)
-
         if re.match(r'[A-Z][A-Z]\d\d\d\d\d\d', line[12:20]):
             # collect accession
             doc = line[64:74]
