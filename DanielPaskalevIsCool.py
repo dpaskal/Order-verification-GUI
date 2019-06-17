@@ -93,13 +93,12 @@ def print_tests(search, list_of_tests):
             self.createLabel()
             self.createTable()
             self.createButton()
-            # Add box layout, 
-            # add table to box layout
-            # add label to box layout
+            # Add vertical box layout,
+            # add widgets to box layout,
             # and add box layout to widget
             self.layout = QVBoxLayout()
             self.layout.addWidget(self.label)
-            self.layout.addWidget(self.button)
+            self.layout.addWidget(self.button, 0, Qt.AlignCenter)
             self.layout.addWidget(self.tableWidget)
             self.setLayout(self.layout)
             # Show widget
@@ -108,19 +107,20 @@ def print_tests(search, list_of_tests):
         def createButton(self):
             # Button to merge accessions.
             self.button = QPushButton('Merge accessions', self)
-            self.button.setGeometry()
             self.button.setToolTip('Merges the accessions that have multiple'
                                    ' worklists in this filter.')
+            self.button.setMaximumWidth(100)
             self.button.clicked.connect(self.on_button_click)
 
         def createLabel(self):
             # label with general information.
             self.label = QLabel()
             self.label.setTextFormat(Qt.PlainText)
-            text = ("The worklist(s) we are searching for is **" + search + 
-                    '** The total order count is: ' + str(len(list_of_tests)) +
+            text = ("*" + search +
+                    '*\nTotal order count: ' + str(len(list_of_tests)) +
                     "\nDouble clicking an entry will copy it to clipboard.")
             self.label.setText(text)
+            self.label.setAlignment(Qt.AlignCenter)
 
         def createTable(self):
             # Create table with accession info.
@@ -154,7 +154,9 @@ def print_tests(search, list_of_tests):
 
         @pyqtSlot()
         def on_button_click(self):
+            # TODO recreate tableWidget with accessions merged.
             print('merge button clicked. NOW MAKE IT REDRAW ENTIRE TABLE.')
+            self.update()
 
     app = QApplication(sys.argv)
     ex = App()
