@@ -63,7 +63,7 @@ def print_tests(search, list_of_tests):
 
     import pyperclip
     # Puts accessions into clipboard. First value is the FILTER.
-    # There are NO DUPLICATES.
+    # There are no duplicates to worry about.
     pyperclip.copy(search + ''.join(['\n' + a[1] for a in output_array]))
     if len(list_of_tests) == 0:
         print("No matches found for ", search)
@@ -73,7 +73,7 @@ def print_tests(search, list_of_tests):
 
     from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
                                  QTableWidget, QTableWidgetItem, QVBoxLayout,
-                                 QAbstractItemView, QLabel)
+                                 QAbstractItemView, QLabel, QPushButton)
     from PyQt5.QtGui import QIcon
     from PyQt5.QtCore import pyqtSlot, Qt
 
@@ -92,16 +92,26 @@ def print_tests(search, list_of_tests):
             self.setGeometry(self.left, self.top, self.width, self.height)
             self.createLabel()
             self.createTable()
+            self.createButton()
             # Add box layout, 
             # add table to box layout
             # add label to box layout
             # and add box layout to widget
             self.layout = QVBoxLayout()
             self.layout.addWidget(self.label)
+            self.layout.addWidget(self.button)
             self.layout.addWidget(self.tableWidget)
             self.setLayout(self.layout)
             # Show widget
             self.show()
+
+        def createButton(self):
+            # Button to merge accessions.
+            self.button = QPushButton('Merge accessions', self)
+            self.button.setGeometry()
+            self.button.setToolTip('Merges the accessions that have multiple'
+                                   ' worklists in this filter.')
+            self.button.clicked.connect(self.on_button_click)
 
         def createLabel(self):
             # label with general information.
@@ -136,13 +146,16 @@ def print_tests(search, list_of_tests):
             self.tableWidget.move(0, 0)
             # table selection change
             self.tableWidget.doubleClicked.connect(self.on_click)
+
         @pyqtSlot()
         def on_click(self):
             # double click to put selected item into clipboard
             pyperclip.copy(self.tableWidget.selectedItems()[0].text())
-            # print("\n")
-            # for currentQTableWidgetItem in self.tableWidget.selectedItems():
-            #    print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
+
+        @pyqtSlot()
+        def on_button_click(self):
+            print('merge button clicked. NOW MAKE IT REDRAW ENTIRE TABLE.')
+
     app = QApplication(sys.argv)
     ex = App()
     sys.exit(app.exec_())
@@ -163,21 +176,13 @@ def check_accession(accession, list_of_tests):
 def main():
     # gathering the initial values for 1) filter and 2) delete duplicates
     if len(sys.argv) >= 2:
-        search = " ".join(sys.argv[1:])
+        search = " ".join(sys.argv[1:])  # unable to get multiple arguments
         search = search.upper()
     elif len(sys.argv) == 1:
         search = input("Worklist filter? (enter to skip): ")
     else:
         sys.exit("More than 1 argument; Feature not yet implemented...")
-
-    # sort = "dummy value"
-    # sort = input("Would you like to remove duplicate accessions? [Y/n] ")
-    # sort = sort.lower()
-    # if (sort != "" and sort != "y" and sort != "n"): sys.exit("Improper value")
-    # if sort == "n": sort_flag = 0
-    # else: sort_flag = 1
     #--------------------------------------------------------------------------------
-    
     pending_list = []
     list_of_worklists = []
     with open(get_filename(),'r') as f:
