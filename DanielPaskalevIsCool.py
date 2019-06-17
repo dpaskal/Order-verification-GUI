@@ -109,7 +109,7 @@ def print_tests(search, list_of_tests):
             self.button = QPushButton('Merge accessions', self)
             self.button.setToolTip('Merges the accessions that have multiple'
                                    ' worklists in this filter.')
-            self.button.setMaximumWidth(100)
+            self.button.setMaximumWidth(150)
             self.button.clicked.connect(self.on_button_click)
 
         def createLabel(self):
