@@ -23,6 +23,7 @@ def get_filename():
         day = day[1]
     location = "".join(["C:\\Users\\" + os.getlogin() + "\\Documents\\"
                         "REFERENCE PENDING LIST ", month, "-", day, ".txt"])
+    location = "C:\\Users\\desktop\\Documents\\test.txt"
     if not os.path.isfile(location):
         sys.exit("Current pending list missing")
     return location
@@ -91,7 +92,7 @@ def print_tests(search, list_of_tests):
             self.setWindowTitle(self.title)
             self.setGeometry(self.left, self.top, self.width, self.height)
             self.createLabel()
-            self.createTable()
+            self.createTable(list_of_tests)
             self.createButton()
             # Add vertical box layout,
             # add widgets to box layout,
@@ -122,7 +123,7 @@ def print_tests(search, list_of_tests):
             self.label.setText(text)
             self.label.setAlignment(Qt.AlignCenter)
 
-        def createTable(self):
+        def createTable(self, list_of_tests):
             # Create table with accession info.
             self.tableWidget = QTableWidget()
             self.tableWidget.setRowCount(len(list_of_tests))
@@ -134,10 +135,11 @@ def print_tests(search, list_of_tests):
             self.tableWidget.horizontalHeader().setStretchLastSection(True)
             self.tableWidget.horizontalHeaderItem(3).setTextAlignment(Qt.AlignLeft)
             for i in range(len(list_of_tests)):
-                self.tableWidget.setItem(i, 0, QTableWidgetItem(list_of_tests[i][1]))
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(list_of_tests[i][3]))
-                self.tableWidget.setItem(i, 2, QTableWidgetItem(list_of_tests[i][0]))
-                self.tableWidget.setItem(i, 3, QTableWidgetItem(list_of_tests[i][2]))
+                self.tableWidget.clearContents()
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(self.list_of_tests[i][1]))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(self.list_of_tests[i][3]))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(self.list_of_tests[i][0]))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(self.list_of_tests[i][2]))
                 self.tableWidget.resizeRowsToContents()  # widen height to fit tests
             self.tableWidget.resizeColumnsToContents()   # resize columns once
             self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
