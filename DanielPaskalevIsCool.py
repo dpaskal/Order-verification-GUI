@@ -7,6 +7,26 @@ import os
 # from openpyxl import Workbook
 
 
+def merge_accessions(temp):
+    """"list_of_tests is 2D array where
+    list_of_tests[i][0] = worklist
+    list_of_tests[i][1] = accession
+    list_of_tests[i][2] = tests
+    list_of_tests[i][3] = doc
+    """
+    # merge duplicate worklists for same accessions
+    newList = []
+    for i in temp:
+        newList.append(i)
+    for i in newList:
+        for j in newList:
+            if j[1] == i[1] and j[2] != i[2]:
+                i[2] += ', ' + j[2]
+                i[0] += ', ' + j[0]
+                newList.remove(j)
+    return newList
+
+
 def filter_duplicates(accessions):
     """Removes duplicate accessions from a list of accessions."""
     return list(dict.fromkeys(accessions))
@@ -23,49 +43,16 @@ def get_filename():
         day = day[1]
     location = "".join(["C:\\Users\\" + os.getlogin() + "\\Documents\\"
                         "REFERENCE PENDING LIST ", month, "-", day, ".txt"])
-    location = "C:\\Users\\desktop\\Documents\\test.txt"
+    #location = "C:\\Users\\desktop\\Documents\\test.txt"
     if not os.path.isfile(location):
         sys.exit("Current pending list missing")
     return location
 
 
-def print_accessions(search, sort_flag, list_of_worklists):
-    """Prints the list of accessions as filtered by the search variable"""
-    output_array = []
-    for i in list_of_worklists:
-        if search in i[0]:
-            if len(i) >= 2:
-                for z in i:
-                    output_array.append(z)
-
-    if sort_flag:
-        output_array = filter_duplicates(output_array)
-    total_count = 0
-    for g in output_array:
-        print(g, end='\n')
-        total_count += 1
-    print("total_count:", total_count)
-
-
 def print_tests(search, list_of_tests):
     """Print accessions in worklists as filtered by the 'search' key."""
-    # import pandas
     output_array = []
     list_of_tests = [a for a in list_of_tests if search in a[0]]
-    for i in list_of_tests:
-        for j in list_of_tests:
-            if j[1] == i[1] and j[2] != i[2]:
-                continue  # remove if you want to merge duplicate accessions
-                i[2] += ', ' + j[2]
-                i[0] += ', ' + j[0]
-                list_of_tests.remove(j)
-        # print("{: <20} {: >10}  {}".format(*i))
-        output_array.append([i[0], i[1]])
-
-    import pyperclip
-    # Puts accessions into clipboard. First value is the FILTER.
-    # There are no duplicates to worry about.
-    pyperclip.copy(search + ''.join(['\n' + a[1] for a in output_array]))
     if len(list_of_tests) == 0:
         print("No matches found for ", search)
     else:
@@ -74,7 +61,7 @@ def print_tests(search, list_of_tests):
 
     from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
                                  QTableWidget, QTableWidgetItem, QVBoxLayout,
-                                 QAbstractItemView, QLabel, QPushButton)
+                                 QAbstractItemView, QLabel, QPushButton, QHBoxLayout)
     from PyQt5.QtGui import QIcon
     from PyQt5.QtCore import pyqtSlot, Qt
 
@@ -86,20 +73,30 @@ def print_tests(search, list_of_tests):
             self.top = 0
             self.width = 800
             self.height = 920
+            self.merged_tests = list_of_tests
             self.initUI()
+            
+            #self.list_of_tests = list_of_tests
 
         def initUI(self):
+            self.is_button_clicked = False
             self.setWindowTitle(self.title)
             self.setGeometry(self.left, self.top, self.width, self.height)
             self.createLabel()
-            self.createTable(list_of_tests)
+            self.createTable()
             self.createButton()
+            self.createCopyButton()
             # Add vertical box layout,
-            # add widgets to box layout,
-            # and add box layout to widget
+            # Add horizontal box layout,
+            # add label, button, to hbox,
+            # add hbox to vbox,
+            # and add table to vbox.
             self.layout = QVBoxLayout()
-            self.layout.addWidget(self.label)
-            self.layout.addWidget(self.button, 0, Qt.AlignCenter)
+            self.hbox = QHBoxLayout()
+            self.hbox.addWidget(self.label)
+            self.hbox.addWidget(self.button)
+            self.hbox.addWidget(self.copyButton)
+            self.layout.addLayout(self.hbox)
             self.layout.addWidget(self.tableWidget)
             self.setLayout(self.layout)
             # Show widget
@@ -113,6 +110,13 @@ def print_tests(search, list_of_tests):
             self.button.setMaximumWidth(150)
             self.button.clicked.connect(self.on_button_click)
 
+        def createCopyButton(self):
+            # Button to copy all accessions.
+            self.copyButton = QPushButton('Copy accessions', self)
+            self.copyButton.setToolTip('Copy all unique accessions for excel.')
+            self.copyButton.setMaximumWidth(150)
+            self.copyButton.clicked.connect(self.on_copyButton_click)
+
         def createLabel(self):
             # label with general information.
             self.label = QLabel()
@@ -123,9 +127,10 @@ def print_tests(search, list_of_tests):
             self.label.setText(text)
             self.label.setAlignment(Qt.AlignCenter)
 
-        def createTable(self, list_of_tests):
+        def createTable(self):
             # Create table with accession info.
             self.tableWidget = QTableWidget()
+            self.tableWidget.clearContents()
             self.tableWidget.setRowCount(len(list_of_tests))
             self.tableWidget.setColumnCount(4)
             self.tableWidget.setHorizontalHeaderLabels(["Accession",
@@ -135,16 +140,15 @@ def print_tests(search, list_of_tests):
             self.tableWidget.horizontalHeader().setStretchLastSection(True)
             self.tableWidget.horizontalHeaderItem(3).setTextAlignment(Qt.AlignLeft)
             for i in range(len(list_of_tests)):
-                self.tableWidget.clearContents()
-                self.tableWidget.setItem(i, 0, QTableWidgetItem(self.list_of_tests[i][1]))
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(self.list_of_tests[i][3]))
-                self.tableWidget.setItem(i, 2, QTableWidgetItem(self.list_of_tests[i][0]))
-                self.tableWidget.setItem(i, 3, QTableWidgetItem(self.list_of_tests[i][2]))
-                self.tableWidget.resizeRowsToContents()  # widen height to fit tests
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(list_of_tests[i][1]))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(list_of_tests[i][3]))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(list_of_tests[i][0]))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(list_of_tests[i][2]))
+            self.tableWidget.resizeRowsToContents()  # widen height to fit tests
             self.tableWidget.resizeColumnsToContents()   # resize columns once
             self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
             self.tableWidget.setSortingEnabled(True)
-            self.tableWidget.setWordWrap(True)  # Doesn't do anything what the fuck
+            self.tableWidget.setWordWrap(True)
             self.tableWidget.move(0, 0)
             # table selection change
             self.tableWidget.doubleClicked.connect(self.on_click)
@@ -155,26 +159,39 @@ def print_tests(search, list_of_tests):
             pyperclip.copy(self.tableWidget.selectedItems()[0].text())
 
         @pyqtSlot()
-        def on_button_click(self):
-            # TODO recreate tableWidget with accessions merged.
-            print('merge button clicked. NOW MAKE IT REDRAW ENTIRE TABLE.')
-            self.update()
+        def on_copyButton_click(self):
+            # click to copy all accessions into clipboard
+            import pyperclip
+            temp = merge_accessions(list_of_tests)
+            pyperclip.copy(search + ''.join(['\n' + a[1] for a in temp]))
 
+        @pyqtSlot()
+        def on_button_click(self):
+            # RE-SET with merged accessions
+            # Clicking button twice causes issues. It does not re-print the original orders.
+            # For some reason, some worklists still show up as merged.
+            self.is_button_clicked = not self.is_button_clicked
+            print('merge button clicked.', str(self.is_button_clicked))
+            if self.is_button_clicked:
+                #temp = list_of_tests
+                print(len(list_of_tests))
+                self.current_tests = self.merged_tests
+                print(len(self.current_tests))
+            else:
+                self.current_tests = list_of_tests
+            self.tableWidget.clearContents()
+            self.tableWidget.setRowCount(len(self.current_tests))
+            self.tableWidget.setColumnCount(4)
+            for i in range(len(self.current_tests)):
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(self.current_tests[i][1]))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(self.current_tests[i][3]))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(self.current_tests[i][0]))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(self.current_tests[i][2]))
+            #self.tableWidget.resizeRowsToContents()  # widen height to fit tests
+            self.tableWidget.resizeColumnsToContents()   # resize columns once
     app = QApplication(sys.argv)
     ex = App()
     sys.exit(app.exec_())
-
-
-def check_accession(accession, list_of_tests):
-    """Check if there is a repeat in accessions"""
-    for i in list_of_tests:
-        print(i)
-        if i[1] == accession:
-            print("duplicate")
-            print(len(list_of_tests[:i]))
-            return len(list_of_tests[:i])
-        else:
-            return False
 
 
 def main():
@@ -194,8 +211,8 @@ def main():
             if line.strip() == '': continue
             if "W O R K L I S T   P E N D I N G" in line:	
                 previous = ''
-                line = ''						#skips fist new-page-header-line
-                for i in range(7):				#skips the next 7 new-page-header-lines
+                line = ''               #skips fist new-page-header-line
+                for i in range(7):      #skips the next 7 new-page-header-lines
                     next(f)
                     # pass
             pending_list.append(line)
@@ -244,7 +261,6 @@ def main():
             else:
                 list_of_tests.append([worklist[0], accession, tests, doc])
                 tests = ""
-    #print_accessions(search, sort_flag, list_of_worklists)
     print_tests(search, list_of_tests)
     os.system('pause')
 
