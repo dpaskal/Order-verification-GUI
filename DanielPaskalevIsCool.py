@@ -1,30 +1,29 @@
-# usr/bin/python3
+#!usr/bin/python3
 
 import re
 import datetime
 import sys
 import os
-# from openpyxl import Workbook
+import pyperclip
 
 
 def merge_accessions(temp):
-    """"list_of_tests is 2D array where
+    """"
+    list_of_tests is 2D array where
     list_of_tests[i][0] = worklist
     list_of_tests[i][1] = accession
     list_of_tests[i][2] = tests
     list_of_tests[i][3] = doc
     """
     # merge duplicate worklists for same accessions
-    newList = []
+    # DEPRECATED BECAUSE LISTS PASS BY REFERENCE
     for i in temp:
-        newList.append(i)
-    for i in newList:
-        for j in newList:
+        for j in temp:
             if j[1] == i[1] and j[2] != i[2]:
                 i[2] += ', ' + j[2]
                 i[0] += ', ' + j[0]
-                newList.remove(j)
-    return newList
+                temp.remove(j)
+    return temp
 
 
 def filter_duplicates(accessions):
@@ -52,7 +51,8 @@ def get_filename():
 def print_tests(search, list_of_tests):
     """Print accessions in worklists as filtered by the 'search' key."""
     output_array = []
-    list_of_tests = [a for a in list_of_tests if search in a[0]]
+    unfiltered_list = list_of_tests
+    #list_of_tests = [a for a in list_of_tests if search in a[0]]
     if len(list_of_tests) == 0:
         print("No matches found for ", search)
     else:
@@ -61,7 +61,8 @@ def print_tests(search, list_of_tests):
 
     from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
                                  QTableWidget, QTableWidgetItem, QVBoxLayout,
-                                 QAbstractItemView, QLabel, QPushButton, QHBoxLayout)
+                                 QAbstractItemView, QLabel, QPushButton,
+                                 QHBoxLayout, QLineEdit)
     from PyQt5.QtGui import QIcon
     from PyQt5.QtCore import pyqtSlot, Qt
 
@@ -73,10 +74,8 @@ def print_tests(search, list_of_tests):
             self.top = 0
             self.width = 800
             self.height = 920
-            self.merged_tests = list_of_tests
+            self.current_tests = list_of_tests
             self.initUI()
-            
-            #self.list_of_tests = list_of_tests
 
         def initUI(self):
             self.is_button_clicked = False
@@ -86,6 +85,11 @@ def print_tests(search, list_of_tests):
             self.createTable()
             self.createButton()
             self.createCopyButton()
+            self.le = QLineEdit()
+            self.le.setObjectName("Filter")
+            self.le.setPlaceholderText("Enter the worklist you would like to filter for")
+            self.le.setMaximumWidth(250)
+            self.le.returnPressed.connect(self.on_button_click)
             # Add vertical box layout,
             # Add horizontal box layout,
             # add label, button, to hbox,
@@ -93,7 +97,9 @@ def print_tests(search, list_of_tests):
             # and add table to vbox.
             self.layout = QVBoxLayout()
             self.hbox = QHBoxLayout()
+            self.minivbox = QVBoxLayout()
             self.hbox.addWidget(self.label)
+            self.hbox.addWidget(self.le)
             self.hbox.addWidget(self.button)
             self.hbox.addWidget(self.copyButton)
             self.layout.addLayout(self.hbox)
@@ -104,9 +110,8 @@ def print_tests(search, list_of_tests):
 
         def createButton(self):
             # Button to merge accessions.
-            self.button = QPushButton('Merge accessions', self)
-            self.button.setToolTip('Merges the accessions that have multiple'
-                                   ' worklists in this filter.')
+            self.button = QPushButton('Filter accessions', self)
+            self.button.setToolTip('Filters the accessions by worklist.')
             self.button.setMaximumWidth(150)
             self.button.clicked.connect(self.on_button_click)
 
@@ -121,8 +126,7 @@ def print_tests(search, list_of_tests):
             # label with general information.
             self.label = QLabel()
             self.label.setTextFormat(Qt.PlainText)
-            text = ("*" + search +
-                    '*\nTotal order count: ' + str(len(list_of_tests)) +
+            text = ('Total order count: ' + str(len(list_of_tests)) +
                     "\nDouble clicking an entry will copy it to clipboard.")
             self.label.setText(text)
             self.label.setAlignment(Qt.AlignCenter)
@@ -161,24 +165,17 @@ def print_tests(search, list_of_tests):
         @pyqtSlot()
         def on_copyButton_click(self):
             # click to copy all accessions into clipboard
-            import pyperclip
-            temp = merge_accessions(list_of_tests)
-            pyperclip.copy(search + ''.join(['\n' + a[1] for a in temp]))
+            self.cp = [i[1] for i in self.current_tests]
+            pyperclip.copy(search + ''.join(['\n' +
+                           a for a in filter_duplicates(self.cp)]))
 
         @pyqtSlot()
         def on_button_click(self):
             # RE-SET with merged accessions
             # Clicking button twice causes issues. It does not re-print the original orders.
             # For some reason, some worklists still show up as merged.
-            self.is_button_clicked = not self.is_button_clicked
-            print('merge button clicked.', str(self.is_button_clicked))
-            if self.is_button_clicked:
-                #temp = list_of_tests
-                print(len(list_of_tests))
-                self.current_tests = self.merged_tests
-                print(len(self.current_tests))
-            else:
-                self.current_tests = list_of_tests
+            search = self.le.text().upper()
+            self.current_tests = [a for a in list_of_tests if search in a[0]]
             self.tableWidget.clearContents()
             self.tableWidget.setRowCount(len(self.current_tests))
             self.tableWidget.setColumnCount(4)
@@ -187,7 +184,7 @@ def print_tests(search, list_of_tests):
                 self.tableWidget.setItem(i, 1, QTableWidgetItem(self.current_tests[i][3]))
                 self.tableWidget.setItem(i, 2, QTableWidgetItem(self.current_tests[i][0]))
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(self.current_tests[i][2]))
-            #self.tableWidget.resizeRowsToContents()  # widen height to fit tests
+            self.tableWidget.resizeRowsToContents()  # widen height to fit tests
             self.tableWidget.resizeColumnsToContents()   # resize columns once
     app = QApplication(sys.argv)
     ex = App()
@@ -196,11 +193,13 @@ def print_tests(search, list_of_tests):
 
 def main():
     # gathering the initial values for 1) filter and 2) delete duplicates
+    search = ''
     if len(sys.argv) >= 2:
         search = " ".join(sys.argv[1:])  # unable to get multiple arguments
         search = search.upper()
     elif len(sys.argv) == 1:
-        search = input("Worklist filter? (enter to skip): ")
+        pass
+        #search = input("Worklist filter? (enter to skip): ")
     else:
         sys.exit("More than 1 argument; Feature not yet implemented...")
     #--------------------------------------------------------------------------------
