@@ -198,12 +198,6 @@ def main():
     with open(get_filename(),'r') as f:
         for line in f:
             if line.strip() == '': continue
-            if "W O R K L I S T   P E N D I N G" in line:	
-                previous = ''
-                line = ''               #skips fist new-page-header-line
-                for i in range(7):      #skips the next 7 new-page-header-lines
-                    next(f)
-                    # pass
             pending_list.append(line)
     total_count = 0
     for line in pending_list:
