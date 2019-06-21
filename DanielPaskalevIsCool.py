@@ -150,7 +150,7 @@ def print_tests(list_of_tests):
                 self.tableWidget.setItem(i, 2, QTableWidgetItem(list_of_tests[i][0]))
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(list_of_tests[i][2]))
             self.tableWidget.resizeRowsToContents()  # widen height to fit tests
-            # self.tableWidget.resizeColumnsToContents()   # do NOT resize columns
+            self.tableWidget.resizeColumnsToContents()   # resize columns only once.
             self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
             self.tableWidget.setSortingEnabled(True)
             self.tableWidget.setWordWrap(True)
@@ -184,7 +184,7 @@ def print_tests(list_of_tests):
                 self.tableWidget.setItem(i, 2, QTableWidgetItem(self.current_tests[i][0]))
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(self.current_tests[i][2]))
             self.tableWidget.resizeRowsToContents()  # resize height to fit tests
-            # self.tableWidget.resizeColumnsToContents()   # no need to resize column
+            # self.tableWidget.resizeColumnsToContents()   # no need to resize column twice
             self.label.setText("Order count: " + str(len(self.current_tests)) +
                                "\nDouble clicking an entry will copy it to clipboard.")
     app = QApplication(sys.argv)
@@ -196,7 +196,7 @@ def process(filename):
     """
     Argument is the text file we are processing.
     Return 2D array of all accessions.
-    List[i][worklist, accession, tests, doc]
+    list_of_tests[i][worklist, accession, tests, doc]
     """
     worklist = ""
     list_of_tests = []
@@ -221,8 +221,7 @@ def process(filename):
                     list_of_tests.append([worklist, accession, tests, doc])
                     tests = ""
             if "Pending Tests: " in line:
-                # collect first line of tests and raise flag if there
-                # are more than one line of tests
+                # collect first line of tests and raise flag if line ends w/ ,
                 tests += line[27:].strip()
                 if line.strip()[-1] == ",":
                     add_more_tests = 1
