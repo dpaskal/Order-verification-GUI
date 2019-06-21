@@ -192,57 +192,48 @@ def print_tests(list_of_tests):
     sys.exit(app.exec_())
 
 
-def main():
-    pending_list = []
-    list_of_worklists = []
-    with open(get_filename(),'r') as f:
-        for line in f:
-            if line.strip() == '': continue
-            pending_list.append(line)
-    total_count = 0
-    for line in pending_list:
-        if "TOTAL FOR WORKLIST" in line:
-            digits = line.strip()
-            total_count += int(digits[-6:])
-
-    worklist = []
-    list_of_worklists = []
+def process(filename):
+    """
+    Argument is the text file we are processing.
+    Return 2D array of all accessions.
+    List[i][worklist, accession, tests, doc]
+    """
+    worklist = ""
     list_of_tests = []
     tests = ""
     add_more_tests = 0
-    for line in pending_list:
-        if "WORKLIST:" in line:
-            # collect worklist
-            line = line.replace("DELAY=2", "")
-            if worklist:
-                list_of_worklists.append(worklist)
-            worklist = []
-            line = line[9:].strip()
-            line = line.split('/', 1)[0]
-            worklist.append(line)
-        if re.match(r'[A-Z][A-Z]\d\d\d\d\d\d', line[12:20]):
-            # collect accession
-            doc = line[64:74]
-            accession = line[12:21].strip()
-            if accession[-1:] == '(': accession = accession[:-1]
-            # cleans a trailing ( in MC accessions that are *(H) 
-            worklist.append(accession)
-        if add_more_tests:
-            # collects secondary lines of tests
-            tests += " " + line.strip()
-            if line.strip()[-1] != ",":
-                add_more_tests = 0
-                list_of_tests.append([worklist[0], accession, tests, doc])
-                tests = ""
-        if "Pending Tests: " in line:
-            # collect first line of tests and raise flag if there
-            # are more than one line of tests
-            tests += line[27:].strip()
-            if line.strip()[-1] == ",":
-                add_more_tests = 1
-            else:
-                list_of_tests.append([worklist[0], accession, tests, doc])
-                tests = ""
+    with open(filename, 'r') as f:
+        for line in f:
+            if "WORKLIST:" in line:
+                worklist = line[9:].strip().split('/', 1)[0]
+            if re.match(r'[A-Z][A-Z]\d\d\d\d\d\d', line[12:20]):
+                # collect accession
+                doc = line[64:74]
+                accession = line[12:21].strip()
+                if accession[-1:] == '(': 
+                    accession = accession[:-1]
+                # cleans a trailing ( in MC accessions that are *(H)
+            if add_more_tests:
+                # collects secondary lines of tests
+                tests += " " + line.strip()
+                if line.strip()[-1] != ",":
+                    add_more_tests = 0
+                    list_of_tests.append([worklist, accession, tests, doc])
+                    tests = ""
+            if "Pending Tests: " in line:
+                # collect first line of tests and raise flag if there
+                # are more than one line of tests
+                tests += line[27:].strip()
+                if line.strip()[-1] == ",":
+                    add_more_tests = 1
+                else:
+                    list_of_tests.append([worklist, accession, tests, doc])
+                    tests = ""
+    return list_of_tests
+
+
+def main():
+    list_of_tests = process(get_filename())
     print_tests(list_of_tests)
 
 
