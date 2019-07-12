@@ -61,7 +61,7 @@ def print_tests(list_of_tests):
                                  QTableWidget, QTableWidgetItem, QVBoxLayout,
                                  QAbstractItemView, QLabel, QPushButton,
                                  QHBoxLayout, QLineEdit)
-    from PyQt5.QtGui import QIcon
+    from PyQt5.QtGui import QIcon, QKeySequence, QPalette, QColor
     from PyQt5.QtCore import pyqtSlot, Qt
 
     class App(QWidget):
@@ -137,18 +137,20 @@ def print_tests(list_of_tests):
             self.tableWidget = QTableWidget()
             self.tableWidget.clearContents()
             self.tableWidget.setRowCount(len(list_of_tests))
-            self.tableWidget.setColumnCount(4)
+            self.tableWidget.setColumnCount(5)
             self.tableWidget.setHorizontalHeaderLabels(["Accession",
+                                                        "Name",
                                                         "DOC",
                                                         "Worklist(s)",
                                                         "Pending Tests"])
             self.tableWidget.horizontalHeader().setStretchLastSection(True)
-            self.tableWidget.horizontalHeaderItem(3).setTextAlignment(Qt.AlignLeft)
+            self.tableWidget.horizontalHeaderItem(4).setTextAlignment(Qt.AlignLeft)
             for i in range(len(list_of_tests)):
                 self.tableWidget.setItem(i, 0, QTableWidgetItem(list_of_tests[i][1]))
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(list_of_tests[i][3]))
-                self.tableWidget.setItem(i, 2, QTableWidgetItem(list_of_tests[i][0]))
-                self.tableWidget.setItem(i, 3, QTableWidgetItem(list_of_tests[i][2]))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(list_of_tests[i][4]))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(list_of_tests[i][3]))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(list_of_tests[i][0]))
+                self.tableWidget.setItem(i, 4, QTableWidgetItem(list_of_tests[i][2]))
             self.tableWidget.resizeRowsToContents()  # widen height to fit tests
             self.tableWidget.resizeColumnsToContents()   # resize columns only once.
             self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
@@ -177,17 +179,36 @@ def print_tests(list_of_tests):
             self.current_tests = [a for a in list_of_tests if self.search in a[0]]
             self.tableWidget.clearContents()
             self.tableWidget.setRowCount(len(self.current_tests))
-            self.tableWidget.setColumnCount(4)
+            self.tableWidget.setColumnCount(5)
             for i in range(len(self.current_tests)):
                 self.tableWidget.setItem(i, 0, QTableWidgetItem(self.current_tests[i][1]))
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(self.current_tests[i][3]))
-                self.tableWidget.setItem(i, 2, QTableWidgetItem(self.current_tests[i][0]))
-                self.tableWidget.setItem(i, 3, QTableWidgetItem(self.current_tests[i][2]))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(self.current_tests[i][4]))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(self.current_tests[i][3]))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(self.current_tests[i][0]))
+                self.tableWidget.setItem(i, 4, QTableWidgetItem(self.current_tests[i][2]))
             self.tableWidget.resizeRowsToContents()  # resize height to fit tests
             # self.tableWidget.resizeColumnsToContents()   # no need to resize column twice
             self.label.setText("Order count: " + str(len(self.current_tests)) +
                                "\nDouble clicking an entry will copy it to clipboard.")
     app = QApplication(sys.argv)
+    # Force the style to be the same on all OSs:
+    app.setStyle("Fusion")
+    # Now use a palette to switch to dark colors:
+    palette = QPalette()
+    palette.setColor(QPalette.Window, QColor(53, 53, 53))
+    palette.setColor(QPalette.WindowText, Qt.white)
+    palette.setColor(QPalette.Base, QColor(25, 25, 25))
+    palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+    palette.setColor(QPalette.ToolTipBase, Qt.white)
+    palette.setColor(QPalette.ToolTipText, Qt.white)
+    palette.setColor(QPalette.Text, Qt.white)
+    palette.setColor(QPalette.Button, QColor(53, 53, 53))
+    palette.setColor(QPalette.ButtonText, Qt.white)
+    palette.setColor(QPalette.BrightText, Qt.red)
+    palette.setColor(QPalette.Link, QColor(42, 130, 218))
+    palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+    palette.setColor(QPalette.HighlightedText, Qt.black)
+    app.setPalette(palette)
     ex = App()
     sys.exit(app.exec_())
 
@@ -208,7 +229,8 @@ def process(filename):
                 worklist = line[9:].strip().split('/', 1)[0]
             if re.match(r'[A-Z][A-Z]\d\d\d\d\d\d', line[12:20]):
                 # collect accession
-                doc = line[64:74]
+                name = line[28:48]
+                doc = line[64:69]
                 accession = line[12:21].strip()
                 if accession[-1:] == '(': 
                     accession = accession[:-1]
@@ -218,7 +240,7 @@ def process(filename):
                 tests += " " + line.strip()
                 if line.strip()[-1] != ",":
                     add_more_tests = 0
-                    list_of_tests.append([worklist, accession, tests, doc])
+                    list_of_tests.append([worklist, accession, tests, doc, name])
                     tests = ""
             if "Pending Tests: " in line:
                 # collect first line of tests and raise flag if line ends w/ ,
@@ -226,7 +248,7 @@ def process(filename):
                 if line.strip()[-1] == ",":
                     add_more_tests = 1
                 else:
-                    list_of_tests.append([worklist, accession, tests, doc])
+                    list_of_tests.append([worklist, accession, tests, doc, name])
                     tests = ""
     return list_of_tests
 
