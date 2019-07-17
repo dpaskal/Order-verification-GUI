@@ -1,10 +1,6 @@
 #!usr/bin/python3
 
-import re
-import datetime
-import sys
-import os
-import pyperclip
+import os, sys, datetime, re
 
 
 def merge_accessions(tests):
@@ -14,6 +10,7 @@ def merge_accessions(tests):
     list_of_tests[i][1] = accession
     list_of_tests[i][2] = tests
     list_of_tests[i][3] = doc
+    list_of_tests[i][4] = name
     """
     # merge duplicate worklists for same accessions
     # DEPRECATED BECAUSE LISTS PASS BY REFERENCE
@@ -45,7 +42,6 @@ def get_filename():
         day = day[1]
     location = "".join(["C:\\Users\\" + os.getlogin() + "\\Documents\\"
                         "REFERENCE PENDING LIST ", month, "-", day, ".txt"])
-    # location = "C:\\Users\\desktop\\Documents\\test.txt"
     if not os.path.isfile(location):
         sys.exit("Current pending list missing")
     return location
@@ -53,31 +49,32 @@ def get_filename():
 
 def print_tests(list_of_tests):
     """Print accessions in worklists as filtered by the 'search' key."""
-    output_array = []
-    unfiltered_list = list_of_tests
+    # output_array = []
+    # unfiltered_list = list_of_tests
     #list_of_tests = [a for a in list_of_tests if search in a[0]]  # not yet
 
     from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
                                  QTableWidget, QTableWidgetItem, QVBoxLayout,
                                  QAbstractItemView, QLabel, QPushButton,
-                                 QHBoxLayout, QLineEdit)
+                                 QHBoxLayout, QLineEdit, qApp)
     from PyQt5.QtGui import QIcon, QKeySequence, QPalette, QColor
     from PyQt5.QtCore import pyqtSlot, Qt
 
     class App(QWidget):
         def __init__(self):
             super().__init__()
-            self.title = 'DanielPaskalevIsCool'
+            self.setWindowIcon(QIcon('icon.png'))
+            self.title = 'DanielPaskalev'
             self.left = 0
             self.top = 0
-            self.width = 800
+            self.width = 900
             self.height = 920
             self.current_tests = list_of_tests
             self.search = "All"
             self.initUI()
 
         def initUI(self):
-            self.is_button_clicked = False
+            # self.is_button_clicked = False
             self.setWindowTitle(self.title)
             self.setGeometry(self.left, self.top, self.width, self.height)
             self.createLabel()
@@ -88,7 +85,7 @@ def print_tests(list_of_tests):
             self.le.setObjectName("Filter")
             self.le.setPlaceholderText("Filter for worklists")
             self.le.setMaximumWidth(200)
-            self.le.returnPressed.connect(self.on_button_click)
+            self.le.returnPressed.connect(self.filter_accessions)
             # Create vertical box layout and horizontal box layout,
             # add label, button, to hbox,
             # add hbox to vbox,
@@ -111,7 +108,7 @@ def print_tests(list_of_tests):
             self.button = QPushButton('Filter accessions', self)
             self.button.setToolTip('Filters the accessions by worklist.')
             self.button.setMaximumWidth(100)
-            self.button.clicked.connect(self.on_button_click)
+            self.button.clicked.connect(self.filter_accessions)
 
         def createCopyButton(self):
             # Create Copy accessions button.
@@ -151,8 +148,8 @@ def print_tests(list_of_tests):
                 self.tableWidget.setItem(i, 2, QTableWidgetItem(list_of_tests[i][3]))
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(list_of_tests[i][0]))
                 self.tableWidget.setItem(i, 4, QTableWidgetItem(list_of_tests[i][2]))
+            self.tableWidget.resizeColumnsToContents()  # resize columns only once.
             self.tableWidget.resizeRowsToContents()  # widen height to fit tests
-            self.tableWidget.resizeColumnsToContents()   # resize columns only once.
             self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
             self.tableWidget.setSortingEnabled(True)
             self.tableWidget.setWordWrap(True)
@@ -163,17 +160,18 @@ def print_tests(list_of_tests):
         @pyqtSlot()
         def on_click(self):
             # double click to put selected item into clipboard
-            pyperclip.copy(self.tableWidget.selectedItems()[0].text())
+            qApp.clipboard().setText(self.tableWidget.selectedItems()[0].text())
 
         @pyqtSlot()
         def on_copyButton_click(self):
             # click to copy all accessions into clipboard
+            # self.clip = QApplication.clipboard()
             self.cp = [i[1] for i in self.current_tests]
-            pyperclip.copy(self.search + ''.join(['\n' +
+            qApp.clipboard().setText(self.search + ''.join(['\n' +
                            a for a in filter_duplicates(self.cp)]))
 
         @pyqtSlot()
-        def on_button_click(self):
+        def filter_accessions(self):
             # Button / Return pressed to filter the orders by worklist.
             self.search = self.le.text().upper()
             self.current_tests = [a for a in list_of_tests if self.search in a[0]]
@@ -197,7 +195,7 @@ def print_tests(list_of_tests):
     palette = QPalette()
     palette.setColor(QPalette.Window, QColor(53, 53, 53))
     palette.setColor(QPalette.WindowText, Qt.white)
-    palette.setColor(QPalette.Base, QColor(25, 25, 25))
+    palette.setColor(QPalette.Base, QColor(35, 35, 35))
     palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
     palette.setColor(QPalette.ToolTipBase, Qt.white)
     palette.setColor(QPalette.ToolTipText, Qt.white)
@@ -229,7 +227,7 @@ def process(filename):
                 worklist = line[9:].strip().split('/', 1)[0]
             if re.match(r'[A-Z][A-Z]\d\d\d\d\d\d', line[12:20]):
                 # collect accession
-                name = line[28:48]
+                name = line[28:47]
                 doc = line[64:69]
                 accession = line[12:21].strip()
                 if accession[-1:] == '(': 
