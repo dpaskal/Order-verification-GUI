@@ -49,28 +49,27 @@ def get_filename():
 
 def print_tests(list_of_tests):
     """Print accessions in worklists as filtered by the 'search' key."""
-    # output_array = []
-    # unfiltered_list = list_of_tests
-    #list_of_tests = [a for a in list_of_tests if search in a[0]]  # not yet
-
     from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
                                  QTableWidget, QTableWidgetItem, QVBoxLayout,
                                  QAbstractItemView, QLabel, QPushButton,
                                  QHBoxLayout, QLineEdit, qApp)
-    from PyQt5.QtGui import QIcon, QKeySequence, QPalette, QColor
-    from PyQt5.QtCore import pyqtSlot, Qt
+    from PyQt5.QtGui import QIcon, QKeySequence, QPalette, QColor, QFont
+    from PyQt5.QtCore import pyqtSlot, Qt, pyqtSignal
 
     class App(QWidget):
+        # resized = pyqtSignal()
         def __init__(self):
             super().__init__()
-            self.setWindowIcon(QIcon('icon.png'))
+            self.setWindowIcon(QIcon('icon.ico'))
+            QApplication.setFont(QFont("Helvetica", 10, QFont.Normal, italic=False))
             self.title = 'DanielPaskalev'
             self.left = 0
             self.top = 0
             self.width = 900
             self.height = 920
             self.current_tests = list_of_tests
-            self.search = "All"
+            self.search = ""
+            # self.resized.connect(self.resizedSlot)
             self.initUI()
 
         def initUI(self):
@@ -81,11 +80,7 @@ def print_tests(list_of_tests):
             self.createTable()
             self.createButton()
             self.createCopyButton()
-            self.le = QLineEdit()
-            self.le.setObjectName("Filter")
-            self.le.setPlaceholderText("Filter for worklists")
-            self.le.setMaximumWidth(200)
-            self.le.returnPressed.connect(self.filter_accessions)
+            self.createLe()
             # Create vertical box layout and horizontal box layout,
             # add label, button, to hbox,
             # add hbox to vbox,
@@ -103,17 +98,25 @@ def print_tests(list_of_tests):
             # Show widget
             self.show()
 
+        def createLe(self):
+            # Create user input box for filter.
+            self.le = QLineEdit()
+            self.le.setObjectName("Filter")
+            self.le.setPlaceholderText("Filter for worklists")
+            self.le.setMaximumWidth(200)
+            self.le.returnPressed.connect(self.filter_accessions)
+
         def createButton(self):
             # Create "Filter Accessions" button.
-            self.button = QPushButton('Filter accessions', self)
-            self.button.setToolTip('Filters the accessions by worklist.')
+            self.button = QPushButton('Filter', self)
+            self.button.setToolTip('Filters the accessions by any matches.')
             self.button.setMaximumWidth(100)
             self.button.clicked.connect(self.filter_accessions)
 
         def createCopyButton(self):
             # Create Copy accessions button.
             self.copyButton = QPushButton('Copy accessions', self)
-            self.copyButton.setToolTip('Copy all unique accessions for excel.')
+            self.copyButton.setToolTip('Copy all unique accessions to clipboard.')
             self.copyButton.setMaximumWidth(100)
             self.copyButton.clicked.connect(self.on_copyButton_click)
 
@@ -121,11 +124,8 @@ def print_tests(list_of_tests):
             # label with general information.
             self.label = QLabel()
             self.label.setTextFormat(Qt.PlainText)
-            if len(self.current_tests):
-                text = ('Total order count: ' + str(len(self.current_tests)))
-            else:
-                text = ('No orders found.')
-            text += "\nDouble clicking an entry will copy it to clipboard."
+            text = ('Total order count: ' + str(len(self.current_tests)) +
+                    "\nDouble clicking an entry will copy it to clipboard.")
             self.label.setText(text)
             self.label.setAlignment(Qt.AlignCenter)
 
@@ -165,16 +165,19 @@ def print_tests(list_of_tests):
         @pyqtSlot()
         def on_copyButton_click(self):
             # click to copy all accessions into clipboard
-            # self.clip = QApplication.clipboard()
             self.cp = [i[1] for i in self.current_tests]
             qApp.clipboard().setText(self.search + ''.join(['\n' +
                            a for a in filter_duplicates(self.cp)]))
 
         @pyqtSlot()
         def filter_accessions(self):
-            # Button / Return pressed to filter the orders by worklist.
+            # Button / Return pressed to filter the orders.
             self.search = self.le.text().upper()
-            self.current_tests = [a for a in list_of_tests if self.search in a[0]]
+            self.current_tests = [a for a in list_of_tests if self.search in a[0]
+                                                           or self.search in a[1]
+                                                           or self.search in a[2]
+                                                           or self.search in a[3]
+                                                           or self.search in a[4]]
             self.tableWidget.clearContents()
             self.tableWidget.setRowCount(len(self.current_tests))
             self.tableWidget.setColumnCount(5)
@@ -185,9 +188,17 @@ def print_tests(list_of_tests):
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(self.current_tests[i][0]))
                 self.tableWidget.setItem(i, 4, QTableWidgetItem(self.current_tests[i][2]))
             self.tableWidget.resizeRowsToContents()  # resize height to fit tests
-            # self.tableWidget.resizeColumnsToContents()   # no need to resize column twice
+            # self.tableWidget.resizeColumnsToContents()  # no need to resize column twice
             self.label.setText("Order count: " + str(len(self.current_tests)) +
                                "\nDouble clicking an entry will copy it to clipboard.")
+
+        # def resizeEvent(self, event):
+        #     self.resized.emit()
+        #     return super(App, self).resizeEvent(event)
+
+        # def resizedSlot(self):
+        #     self.tableWidget.resizeRowsToContents()
+
     app = QApplication(sys.argv)
     # Force the style to be the same on all OSs:
     app.setStyle("Fusion")
@@ -252,8 +263,7 @@ def process(filename):
 
 
 def main():
-    list_of_tests = process(get_filename())
-    print_tests(list_of_tests)
+    print_tests(process(get_filename()))
 
 
 if __name__ == '__main__':
