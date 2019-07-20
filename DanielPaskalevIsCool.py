@@ -124,7 +124,7 @@ def print_tests(list_of_tests):
             # label with general information.
             self.label = QLabel()
             self.label.setTextFormat(Qt.PlainText)
-            text = ('Total order count: ' + str(len(self.current_tests)) +
+            text = ('Order count: ' + str(len(self.current_tests)) +
                     "\nDouble clicking an entry will copy it to clipboard.")
             self.label.setText(text)
             self.label.setAlignment(Qt.AlignCenter)
