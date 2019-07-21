@@ -1,6 +1,12 @@
 #!usr/bin/python3
 
 import os, sys, datetime, re
+from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
+                             QTableWidget, QTableWidgetItem, QVBoxLayout,
+                             QAbstractItemView, QLabel, QPushButton,
+                             QHBoxLayout, QLineEdit, qApp, QErrorMessage)
+from PyQt5.QtGui import QIcon, QKeySequence, QPalette, QColor, QFont
+from PyQt5.QtCore import pyqtSlot, Qt, pyqtSignal
 
 
 def merge_accessions(tests):
@@ -43,19 +49,23 @@ def get_filename():
     location = "".join(["C:\\Users\\" + os.getlogin() + "\\Documents\\"
                         "REFERENCE PENDING LIST ", month, "-", day, ".txt"])
     if not os.path.isfile(location):
-        sys.exit("Current pending list missing")
+        # sys.exit("Current pending list missing")
+        error_dialogue("Today's pending list not found in My Documents.")
     return location
+
+
+def error_dialogue(message):
+    """Create error window with the message given"""
+
+    error = QApplication([])
+    error_dialog = QErrorMessage()
+    error_dialog.showMessage(message)
+    error_dialog.setWindowTitle("Error!")
+    sys.exit(error.exec_())
 
 
 def print_tests(list_of_tests):
     """Print accessions in worklists as filtered by the 'search' key."""
-    from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
-                                 QTableWidget, QTableWidgetItem, QVBoxLayout,
-                                 QAbstractItemView, QLabel, QPushButton,
-                                 QHBoxLayout, QLineEdit, qApp)
-    from PyQt5.QtGui import QIcon, QKeySequence, QPalette, QColor, QFont
-    from PyQt5.QtCore import pyqtSlot, Qt, pyqtSignal
-
     class App(QWidget):
         # resized = pyqtSignal()
         def __init__(self):
@@ -102,7 +112,7 @@ def print_tests(list_of_tests):
             # Create user input box for filter.
             self.le = QLineEdit()
             self.le.setObjectName("Filter")
-            self.le.setPlaceholderText("Filter for worklists")
+            self.le.setPlaceholderText("Filter")
             self.le.setMaximumWidth(200)
             self.le.returnPressed.connect(self.filter_accessions)
 
@@ -167,17 +177,18 @@ def print_tests(list_of_tests):
             # click to copy all accessions into clipboard
             self.cp = [i[1] for i in self.current_tests]
             qApp.clipboard().setText(self.search + ''.join(['\n' +
-                           a for a in filter_duplicates(self.cp)]))
+                                    a for a in filter_duplicates(self.cp)]))
 
         @pyqtSlot()
         def filter_accessions(self):
             # Button / Return pressed to filter the orders.
             self.search = self.le.text().upper()
-            self.current_tests = [a for a in list_of_tests if self.search in a[0]
-                                                           or self.search in a[1]
-                                                           or self.search in a[2]
-                                                           or self.search in a[3]
-                                                           or self.search in a[4]]
+            self.current_tests = [a for a in list_of_tests if
+                                  self.search in a[0] or
+                                  self.search in a[1] or
+                                  self.search in a[2] or
+                                  self.search in a[3] or
+                                  self.search in a[4]]
             self.tableWidget.clearContents()
             self.tableWidget.setRowCount(len(self.current_tests))
             self.tableWidget.setColumnCount(5)
@@ -241,7 +252,7 @@ def process(filename):
                 name = line[28:47]
                 doc = line[64:69]
                 accession = line[12:21].strip()
-                if accession[-1:] == '(': 
+                if accession[-1:] == '(':
                     accession = accession[:-1]
                 # cleans a trailing ( in MC accessions that are *(H)
             if add_more_tests:
