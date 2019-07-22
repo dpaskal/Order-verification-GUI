@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
                              QHBoxLayout, QLineEdit, qApp, QErrorMessage)
 from PyQt5.QtGui import QIcon, QKeySequence, QPalette, QColor, QFont
 from PyQt5.QtCore import pyqtSlot, Qt, pyqtSignal
+from PyQt5.QtWidgets import QMenuBar
 
 
 def merge_accessions(tests):
@@ -56,11 +57,10 @@ def get_filename():
 
 def error_dialogue(message):
     """Create error window with the message given"""
-
     error = QApplication([])
     error_dialog = QErrorMessage()
+    error_dialog.setWindowTitle("File not found")
     error_dialog.showMessage(message)
-    error_dialog.setWindowTitle("Error!")
     sys.exit(error.exec_())
 
 
@@ -71,7 +71,7 @@ def print_tests(list_of_tests):
         def __init__(self):
             super().__init__()
             self.setWindowIcon(QIcon('icon.ico'))
-            QApplication.setFont(QFont("Helvetica", 10, QFont.Normal, italic=False))
+            QApplication.setFont(QFont("Helvetica", 9, QFont.Normal, italic=False))
             self.title = 'DanielPaskalev'
             self.left = 0
             self.top = 0
@@ -86,6 +86,9 @@ def print_tests(list_of_tests):
             # self.is_button_clicked = False
             self.setWindowTitle(self.title)
             self.setGeometry(self.left, self.top, self.width, self.height)
+            self.mainMenu = QMenuBar()
+            self.mainMenu.addMenu('File')
+            # self.setMenuBar(self.mainMenu)
             self.createLabel()
             self.createTable()
             self.createButton()
@@ -134,8 +137,8 @@ def print_tests(list_of_tests):
             # label with general information.
             self.label = QLabel()
             self.label.setTextFormat(Qt.PlainText)
-            text = ('Order count: ' + str(len(self.current_tests)) +
-                    "\nDouble clicking an entry will copy it to clipboard.")
+            text = ("Double click entry to copy | Order count: " +
+                    str(len(self.current_tests)))
             self.label.setText(text)
             self.label.setAlignment(Qt.AlignCenter)
 
@@ -200,8 +203,8 @@ def print_tests(list_of_tests):
                 self.tableWidget.setItem(i, 4, QTableWidgetItem(self.current_tests[i][2]))
             self.tableWidget.resizeRowsToContents()  # resize height to fit tests
             # self.tableWidget.resizeColumnsToContents()  # no need to resize column twice
-            self.label.setText("Order count: " + str(len(self.current_tests)) +
-                               "\nDouble clicking an entry will copy it to clipboard.")
+            self.label.setText("Double click entry to copy | Order count: " +
+                                str(len(self.current_tests)))
 
         # def resizeEvent(self, event):
         #     self.resized.emit()
@@ -261,7 +264,8 @@ def process(filename):
                 if line.strip()[-1] != ",":
                     add_more_tests = 0
                     list_of_tests.append([worklist, accession, tests, doc, name])
-                    tests = ""
+                    # empty the variables in preparation for next accession.
+                    accession, tests, doc, name = [""]*4
             if "Pending Tests: " in line:
                 # collect first line of tests and raise flag if line ends w/ ,
                 tests += line[27:].strip()
@@ -269,7 +273,8 @@ def process(filename):
                     add_more_tests = 1
                 else:
                     list_of_tests.append([worklist, accession, tests, doc, name])
-                    tests = ""
+                    # empty the variables in preparation for next accession.
+                    accession, tests, doc, name = [""]*4
     return list_of_tests
 
 
