@@ -1,5 +1,6 @@
 #!usr/bin/python3
 
+import time
 import os, sys, datetime, re
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
                              QTableWidget, QTableWidgetItem, QVBoxLayout,
@@ -7,7 +8,6 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
                              QHBoxLayout, QLineEdit, qApp, QErrorMessage)
 from PyQt5.QtGui import QIcon, QKeySequence, QPalette, QColor, QFont
 from PyQt5.QtCore import pyqtSlot, Qt, pyqtSignal
-from PyQt5.QtWidgets import QMenuBar
 
 
 def merge_accessions(tests):
@@ -86,9 +86,6 @@ def print_tests(list_of_tests):
             # self.is_button_clicked = False
             self.setWindowTitle(self.title)
             self.setGeometry(self.left, self.top, self.width, self.height)
-            self.mainMenu = QMenuBar()
-            self.mainMenu.addMenu('File')
-            # self.setMenuBar(self.mainMenu)
             self.createLabel()
             self.createTable()
             self.createButton()
@@ -100,7 +97,6 @@ def print_tests(list_of_tests):
             # and add table to vbox.
             self.layout = QVBoxLayout()
             self.hbox = QHBoxLayout()
-            self.minivbox = QVBoxLayout()
             self.hbox.addWidget(self.label)
             self.hbox.addWidget(self.le)
             self.hbox.addWidget(self.button)
@@ -110,6 +106,7 @@ def print_tests(list_of_tests):
             self.setLayout(self.layout)
             # Show widget
             self.show()
+            print(time.process_time())
 
         def createLe(self):
             # Create user input box for filter.
@@ -245,7 +242,7 @@ def process(filename):
     worklist = ""
     list_of_tests = []
     tests = ""
-    add_more_tests = 0
+    add_more_tests = False
     with open(filename, 'r') as f:
         for line in f:
             if "WORKLIST:" in line:
@@ -262,7 +259,7 @@ def process(filename):
                 # collects secondary lines of tests
                 tests += " " + line.strip()
                 if line.strip()[-1] != ",":
-                    add_more_tests = 0
+                    add_more_tests = False
                     list_of_tests.append([worklist, accession, tests, doc, name])
                     # empty the variables in preparation for next accession.
                     accession, tests, doc, name = [""]*4
@@ -270,7 +267,7 @@ def process(filename):
                 # collect first line of tests and raise flag if line ends w/ ,
                 tests += line[27:].strip()
                 if line.strip()[-1] == ",":
-                    add_more_tests = 1
+                    add_more_tests = True
                 else:
                     list_of_tests.append([worklist, accession, tests, doc, name])
                     # empty the variables in preparation for next accession.
