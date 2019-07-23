@@ -2,23 +2,23 @@
 
 import time
 import os, sys, datetime, re
-from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
+from PySide2.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
                              QTableWidget, QTableWidgetItem, QVBoxLayout,
                              QAbstractItemView, QLabel, QPushButton,
                              QHBoxLayout, QLineEdit, qApp, QErrorMessage)
-from PyQt5.QtGui import QIcon, QKeySequence, QPalette, QColor, QFont
-from PyQt5.QtCore import pyqtSlot, Qt, pyqtSignal
+from PySide2.QtGui import QIcon, QKeySequence, QPalette, QColor, QFont
+from PySide2.QtCore import Slot, Qt
 
-
+""" 
 def merge_accessions(tests):
-    """" DEPRECATED
+    " DEPRECATED
     list_of_tests is 2D array where
     list_of_tests[i][0] = worklist
     list_of_tests[i][1] = accession
     list_of_tests[i][2] = tests
     list_of_tests[i][3] = doc
     list_of_tests[i][4] = name
-    """
+    "
     # merge duplicate worklists for same accessions
     # DEPRECATED BECAUSE LISTS PASS BY REFERENCE
     temp = tests[:][:]
@@ -31,7 +31,7 @@ def merge_accessions(tests):
                 tempx.remove(j)  # shoot me in the face
                 temp = tuple(tempx)
     return temp
-
+ """
 
 def filter_duplicates(accessions):
     """Removes duplicate accessions from a list of accessions."""
@@ -64,8 +64,49 @@ def error_dialogue(message):
     sys.exit(error.exec_())
 
 
-def print_tests(list_of_tests):
-    """Print accessions in worklists as filtered by the 'search' key."""
+def process(filename):
+    """
+    Argument is the text file we are processing.
+    Return 2D array of all accessions.
+    list_of_tests[i][worklist, accession, tests, doc]
+    """
+    worklist = ""
+    list_of_tests = []
+    tests = ""
+    add_more_tests = False
+    with open(filename, 'r') as f:
+        for line in f:
+            if "WORKLIST:" in line:
+                worklist = line[9:].strip().split('/', 1)[0]
+            if re.match(r'[A-Z][A-Z]\d\d\d\d\d\d', line[12:20]):
+                # collect accession
+                name = line[28:47]
+                doc = line[64:69]
+                accession = line[12:21].strip()
+                if accession[-1:] == '(':
+                    accession = accession[:-1]
+                # cleans a trailing ( in MC accessions that are *(H)
+            if add_more_tests:
+                # collects secondary lines of tests
+                tests += " " + line.strip()
+                if line.strip()[-1] != ",":
+                    add_more_tests = False
+                    list_of_tests.append([worklist, accession, tests, doc, name])
+                    # empty the variables in preparation for next accession.
+                    accession, tests, doc, name = [""]*4
+            if "Pending Tests: " in line:
+                # collect first line of tests and raise flag if line ends w/ ,
+                tests += line[27:].strip()
+                if line.strip()[-1] == ",":
+                    add_more_tests = True
+                else:
+                    list_of_tests.append([worklist, accession, tests, doc, name])
+                    # empty the variables in preparation for next accession.
+                    accession, tests, doc, name = [""]*4
+    return list_of_tests
+
+
+def main():
     class App(QWidget):
         # resized = pyqtSignal()
         def __init__(self):
@@ -77,7 +118,8 @@ def print_tests(list_of_tests):
             self.top = 0
             self.width = 900
             self.height = 920
-            self.current_tests = list_of_tests
+            self.current_tests = process(get_filename())
+            self.original_tests = process(get_filename())
             self.search = ""
             # self.resized.connect(self.resizedSlot)
             self.initUI()
@@ -143,7 +185,7 @@ def print_tests(list_of_tests):
             # Create table with accession info.
             self.tableWidget = QTableWidget()
             self.tableWidget.clearContents()
-            self.tableWidget.setRowCount(len(list_of_tests))
+            self.tableWidget.setRowCount(len(self.current_tests))
             self.tableWidget.setColumnCount(5)
             self.tableWidget.setHorizontalHeaderLabels(["Accession",
                                                         "Name",
@@ -152,12 +194,12 @@ def print_tests(list_of_tests):
                                                         "Pending Tests"])
             self.tableWidget.horizontalHeader().setStretchLastSection(True)
             self.tableWidget.horizontalHeaderItem(4).setTextAlignment(Qt.AlignLeft)
-            for i in range(len(list_of_tests)):
-                self.tableWidget.setItem(i, 0, QTableWidgetItem(list_of_tests[i][1]))
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(list_of_tests[i][4]))
-                self.tableWidget.setItem(i, 2, QTableWidgetItem(list_of_tests[i][3]))
-                self.tableWidget.setItem(i, 3, QTableWidgetItem(list_of_tests[i][0]))
-                self.tableWidget.setItem(i, 4, QTableWidgetItem(list_of_tests[i][2]))
+            for i in range(len(self.current_tests)):
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(self.current_tests[i][1]))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(self.current_tests[i][4]))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(self.current_tests[i][3]))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(self.current_tests[i][0]))
+                self.tableWidget.setItem(i, 4, QTableWidgetItem(self.current_tests[i][2]))
             self.tableWidget.resizeColumnsToContents()  # resize columns only once.
             self.tableWidget.resizeRowsToContents()  # widen height to fit tests
             self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
@@ -167,23 +209,23 @@ def print_tests(list_of_tests):
             # table selection change
             self.tableWidget.doubleClicked.connect(self.on_click)
 
-        @pyqtSlot()
+        @Slot()
         def on_click(self):
             # double click to put selected item into clipboard
             qApp.clipboard().setText(self.tableWidget.selectedItems()[0].text())
 
-        @pyqtSlot()
+        @Slot()
         def on_copyButton_click(self):
             # click to copy all accessions into clipboard
             self.cp = [i[1] for i in self.current_tests]
             qApp.clipboard().setText(self.search + ''.join(['\n' +
                                     a for a in filter_duplicates(self.cp)]))
 
-        @pyqtSlot()
+        @Slot()
         def filter_accessions(self):
             # Button / Return pressed to filter the orders.
             self.search = self.le.text().upper()
-            self.current_tests = [a for a in list_of_tests if
+            self.current_tests = [a for a in self.original_tests if
                                   self.search in a[0] or
                                   self.search in a[1] or
                                   self.search in a[2] or
@@ -231,52 +273,6 @@ def print_tests(list_of_tests):
     app.setPalette(palette)
     ex = App()
     sys.exit(app.exec_())
-
-
-def process(filename):
-    """
-    Argument is the text file we are processing.
-    Return 2D array of all accessions.
-    list_of_tests[i][worklist, accession, tests, doc]
-    """
-    worklist = ""
-    list_of_tests = []
-    tests = ""
-    add_more_tests = False
-    with open(filename, 'r') as f:
-        for line in f:
-            if "WORKLIST:" in line:
-                worklist = line[9:].strip().split('/', 1)[0]
-            if re.match(r'[A-Z][A-Z]\d\d\d\d\d\d', line[12:20]):
-                # collect accession
-                name = line[28:47]
-                doc = line[64:69]
-                accession = line[12:21].strip()
-                if accession[-1:] == '(':
-                    accession = accession[:-1]
-                # cleans a trailing ( in MC accessions that are *(H)
-            if add_more_tests:
-                # collects secondary lines of tests
-                tests += " " + line.strip()
-                if line.strip()[-1] != ",":
-                    add_more_tests = False
-                    list_of_tests.append([worklist, accession, tests, doc, name])
-                    # empty the variables in preparation for next accession.
-                    accession, tests, doc, name = [""]*4
-            if "Pending Tests: " in line:
-                # collect first line of tests and raise flag if line ends w/ ,
-                tests += line[27:].strip()
-                if line.strip()[-1] == ",":
-                    add_more_tests = True
-                else:
-                    list_of_tests.append([worklist, accession, tests, doc, name])
-                    # empty the variables in preparation for next accession.
-                    accession, tests, doc, name = [""]*4
-    return list_of_tests
-
-
-def main():
-    print_tests(process(get_filename()))
 
 
 if __name__ == '__main__':
