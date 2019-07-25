@@ -2,22 +2,22 @@
 
 import time
 import os, sys, datetime, re
-from PySide2.QtWidgets import (QMainWindow, QApplication, QWidget, QAction,
+from PySide2.QtWidgets import (QApplication, QWidget,
                              QTableWidget, QTableWidgetItem, QVBoxLayout,
                              QAbstractItemView, QLabel, QPushButton,
                              QHBoxLayout, QLineEdit, qApp, QErrorMessage)
-from PySide2.QtGui import QIcon, QKeySequence, QPalette, QColor, QFont
+from PySide2.QtGui import QIcon, QPalette, QColor, QFont
 from PySide2.QtCore import Slot, Qt
 
 """ 
 def merge_accessions(tests):
     " DEPRECATED
-    list_of_tests is 2D array where
-    list_of_tests[i][0] = worklist
-    list_of_tests[i][1] = accession
-    list_of_tests[i][2] = tests
-    list_of_tests[i][3] = doc
-    list_of_tests[i][4] = name
+    order_list is 2D array where
+    order_list[i][0] = worklist
+    order_list[i][1] = accession
+    order_list[i][2] = tests
+    order_list[i][3] = doc
+    order_list[i][4] = name
     "
     # merge duplicate worklists for same accessions
     # DEPRECATED BECAUSE LISTS PASS BY REFERENCE
@@ -43,14 +43,12 @@ def get_filename():
     month = datetime.datetime.now().strftime("%m")
     day = datetime.datetime.now().strftime("%d")
     # strip leading 0 in month or day
-    if month[0] == "0":
-        month = month[1]
-    if day[0] == "0":
-        day = day[1]
+    month = month[1] if month[0] == "0" else month
+    day = day[1] if day[0] == "0" else day
+    # get pending list file location. Harded coded to My Documents
     location = "".join(["C:\\Users\\" + os.getlogin() + "\\Documents\\"
                         "REFERENCE PENDING LIST ", month, "-", day, ".txt"])
     if not os.path.isfile(location):
-        # sys.exit("Current pending list missing")
         error_dialogue("Today's pending list not found in My Documents.")
     return location
 
@@ -68,11 +66,10 @@ def process(filename):
     """
     Argument is the text file we are processing.
     Return 2D array of all accessions.
-    list_of_tests[i][worklist, accession, tests, doc]
+    order_list[i][worklist, accession, tests, doc]
     """
-    worklist = ""
-    list_of_tests = []
-    tests = ""
+    worklist, tests = "", ""
+    order_list = []
     add_more_tests = False
     with open(filename, 'r') as f:
         for line in f:
@@ -91,22 +88,23 @@ def process(filename):
                 tests += " " + line.strip()
                 if line.strip()[-1] != ",":
                     add_more_tests = False
-                    list_of_tests.append([worklist, accession, tests, doc, name])
+                    order_list.append([worklist, accession, tests, doc, name])
                     # empty the variables in preparation for next accession.
                     accession, tests, doc, name = [""]*4
             if "Pending Tests: " in line:
-                # collect first line of tests and raise flag if line ends w/ ,
+                # collect first line of tests and raise flag if line ends w/ ","
                 tests += line[27:].strip()
                 if line.strip()[-1] == ",":
                     add_more_tests = True
                 else:
-                    list_of_tests.append([worklist, accession, tests, doc, name])
+                    order_list.append([worklist, accession, tests, doc, name])
                     # empty the variables in preparation for next accession.
                     accession, tests, doc, name = [""]*4
-    return list_of_tests
+    return order_list
 
 
 def main():
+    test = get_filename()  # To create error_dialog outside of App.
     class App(QWidget):
         # resized = pyqtSignal()
         def __init__(self):
@@ -114,10 +112,8 @@ def main():
             self.setWindowIcon(QIcon('icon.ico'))
             QApplication.setFont(QFont("Helvetica", 9, QFont.Normal, italic=False))
             self.title = 'DanielPaskalev'
-            self.left = 0
-            self.top = 0
-            self.width = 900
-            self.height = 920
+            self.left, self.top = 0, 0
+            self.width, self.height = 900, 920
             self.current_tests = process(get_filename())
             self.original_tests = process(get_filename())
             self.search = ""
@@ -127,11 +123,13 @@ def main():
         def initUI(self):
             # self.is_button_clicked = False
             self.setWindowTitle(self.title)
-            self.setGeometry(self.left, self.top, self.width, self.height)
+            # self.setGeometry(self.left, self.top, self.width, self.height)
+            self.setWindowState(Qt.WindowMaximized)
             self.createLabel()
             self.createTable()
             self.createButton()
             self.createCopyButton()
+            self.createRefreshButton()
             self.createLe()
             # Create vertical box layout and horizontal box layout,
             # add label, button, to hbox,
@@ -143,6 +141,7 @@ def main():
             self.hbox.addWidget(self.le)
             self.hbox.addWidget(self.button)
             self.hbox.addWidget(self.copyButton)
+            self.hbox.addWidget(self.refreshButton)
             self.layout.addLayout(self.hbox)
             self.layout.addWidget(self.tableWidget)
             self.setLayout(self.layout)
@@ -162,15 +161,21 @@ def main():
             # Create "Filter Accessions" button.
             self.button = QPushButton('Filter', self)
             self.button.setToolTip('Filters the accessions by any matches.')
-            self.button.setMaximumWidth(100)
+            self.button.setMaximumWidth(60)
             self.button.clicked.connect(self.filter_accessions)
 
         def createCopyButton(self):
             # Create Copy accessions button.
-            self.copyButton = QPushButton('Copy accessions', self)
+            self.copyButton = QPushButton('Copy', self)
             self.copyButton.setToolTip('Copy all unique accessions to clipboard.')
-            self.copyButton.setMaximumWidth(100)
+            self.copyButton.setMaximumWidth(60)
             self.copyButton.clicked.connect(self.on_copyButton_click)
+
+        def createRefreshButton(self):
+            self.refreshButton = QPushButton('Refresh', self)
+            self.refreshButton.setToolTip('Refresh table with new pending list.')
+            self.refreshButton.setMaximumWidth(60)
+            self.refreshButton.clicked.connect(self.on_refresh)
 
         def createLabel(self):
             # label with general information.
@@ -213,6 +218,12 @@ def main():
         def on_click(self):
             # double click to put selected item into clipboard
             qApp.clipboard().setText(self.tableWidget.selectedItems()[0].text())
+
+        @Slot()
+        def on_refresh(self):
+            # Refresh button clicked to re-create qtablewidget with new pending list.
+            self.original_tests = process(get_filename())
+            self.filter_accessions()
 
         @Slot()
         def on_copyButton_click(self):

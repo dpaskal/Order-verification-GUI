@@ -2,5 +2,6 @@
     "python.linting.pylintEnabled": false,
     "python.linting.pep8Enabled": true,
     "python.linting.enabled": true,
-    "python.pythonPath": "C:\\python37\\python.exe"
+    "python.pythonPath": "C:\\python37\\python.exe",
+    "git.ignoreLimitWarning": true
 }
