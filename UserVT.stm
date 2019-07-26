@@ -1,0 +1,300 @@
+
+Sub LOGIN
+    '! Macro created on Tuesday May 8, 2018.
+
+    Dim nContinue as Integer
+    Dim nTimeOut as Integer
+
+    ' The default timeout for each command is 3 minutes.
+    ' Increase this value if your host requires more time
+    ' for each command.
+    nTimeOut = 3
+
+    Dim LockStep As Object
+    Set LockStep = Session.LockStep
+    LockStep.Start
+
+    While (Circuit.Connected = False)
+    Wend
+
+    Session.Send "DXP1" + chr(13)
+
+    ' Wait for response from host.
+    Session.StringWait.Timeout = nTimeout
+    Session.StringWait.MatchStringExact chr(27) + "[0m "
+    if Session.StringWait.Start = smlWAITTIMEOUT then
+        nContinue = QuerySyncError()
+        if nContinue <> ebYes then End
+    end if
+
+    LOGIN_PasswordHandler 1
+    Session.Send chr(13)
+
+    ' Wait for response from host.
+    Session.StringWait.Timeout = nTimeout
+    Session.StringWait.MatchStringExact "     READ YOUR MAIL? <N> "
+    if Session.StringWait.Start = smlWAITTIMEOUT then
+        nContinue = QuerySyncError()
+        if nContinue <> ebYes then End
+    end if
+
+    Session.Send chr(13)
+
+    Set LockStep = Nothing
+
+End Sub
+
+
+
+Sub LOGIN_PasswordHandler(i as Integer)
+' This procedure is called to send a password to the host.
+'
+' You have chosen to store passwords in your macro file, so this procedure
+' simply sends the correct password.
+
+    select case i
+        case 1 
+            Session.Send "171717"
+    end select
+
+End Sub
+
+Sub CAPTURE_SEND_OUT_LIST
+    '! Macro created on Wednesday Nov 7, 2018.
+    '  To use an existing macro, select "Macro/Use Existing Macro" from the Macro
+    '  Editor menu.
+	
+	'Set filename to "reference send out list currante date in MM/DD format
+	CurDate = Now()
+	FileName = "C:\Users\" & Mid$(Environ$(37), 10, Len(Environ$(37))) & "\Documents\REFERENCE SEND OUT LIST " & Month(CurDate) & "-" & Day(CurDate) & ".txt"
+
+	'set prompt to ask if file already exists
+	Session.CaptureFileHandling = smlPROMPTOVAPP
+	'create return value for session
+	Dim retVal as Boolean 
+	
+	'Open reference send out list starting from main screen
+
+	Session.Send "2" + Chr(13)
+	Session.Send "11" + Chr(13)
+	Session.Send "117" + Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)
+
+	'hopefully start recording
+	Dim LockSession as Object
+	Set LockSession = Session.LockStep
+	LockSession.Start
+	retVal = Session.Capture(FileName)
+	If retVal = FALSE Then
+		Session.Echo "Error: Can't create file in Session.Capture"
+		End
+	End If
+	Sleep(2000)
+	Session.Send Chr(13)
+	'Wait until <CR> to continue shows up on screen which happens at the end of ref pending list
+	Session.StringWait.MatchStringExact "** END **"	 
+	Session.StringWait.Start
+	
+	
+	Session.EndCapture
+	'Sleep(1000)
+	Set LockSession = Nothing
+End Sub
+
+Sub CAPTURE_PEND_LIST
+    '! Macro created on Wednesday Nov 14, 2018.
+    '  To use an existing macro, select "Macro/Use Existing Macro" from the Macro
+    '  Editor menu.
+	'Set filename to "reference pending list currante date in MM/DD format
+	CurDate = Now()
+	FileName = "C:\Users\" & Mid$(Environ$(37), 10, Len(Environ$(37))) & "\Documents\REFERENCE PENDING LIST " & Month(CurDate) & "-" & Day(CurDate) & ".txt"
+
+	If (FileExists(FileName)) Then
+		Kill FileName
+	End If
+
+	'set prompt to ask if file already exists
+	'Session.CaptureFileHandling = 2
+	'create return value for session
+	Dim retVal as Boolean 
+	
+	'Open reference send out list starting from main screen
+
+	Session.Send "2" + Chr(13)
+	Session.Send "4" + Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)
+	Session.Send "2" + Chr(13)
+	Session.Send "DEPT:REFERENCE" + Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)
+	Session.Send "Y" + Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)	
+	Session.Send Chr(13)
+
+	'hopefully start recording
+	Dim LockSession as Object
+	Set LockSession = Session.LockStep
+	LockSession.Start
+	Session.CaptureFileHandling = smlPROMPTOVAPP
+	retVal = Session.Capture(FileName)
+	If retVal = FALSE Then
+		Session.Echo "Error: Can't create file in Session.Capture"
+		End
+	End If
+	Sleep(2000)
+	Session.Send Chr(13)
+	'Wait until ** END ** shows up on screen which happens at the end of ref pending list
+	Session.StringWait.MatchStringExact "** END **"	 
+	Session.StringWait.Start
+	Session.EndCapture
+	Set LockSession = Nothing
+
+End Sub
+
+Sub MENU
+    '! Macro created on Monday Dec 17, 2018.
+    '  To use an existing macro, select "Macro/Use Existing Macro" from the Macro
+    '  Editor menu.
+Session.Send "MENU" + Chr(13)
+End Sub
+
+Sub CAPTURE_TS_QUEST
+    '! Macro created on Wednesday Jan 23, 2019.
+    '  To use an existing macro, select "Macro/Use Existing Macro" from the Macro
+    '  Editor menu.
+
+    CurDate = Now()
+    FileName = "C:\Users\" & Mid$(Environ$(37), 10, Len(Environ$(37))) & "\Documents\TS QUEST PENDING LIST " & Month(CurDate) & "-" & Day(CurDate) & ".txt"
+	'set prompt to ask if file already exists
+	Session.CaptureFileHandling = smlPROMPTOVAPP
+	'create return value for session
+	Dim retVal as Boolean 
+	
+	'Open reference send out list starting from main screen
+
+	Session.Send "2" + Chr(13)
+	Session.Send "4" + Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)
+	Session.Send "0" + Chr(13)
+	Session.Send "TS QUEST" + Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)
+	Session.Send "Y" + Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)	
+	Session.Send Chr(13)
+
+	'hopefully start recording
+	Dim LockSession as Object
+	Set LockSession = Session.LockStep
+	LockSession.Start
+	retVal = Session.Capture(FileName)
+	If retVal = FALSE Then
+		Session.Echo "Error: Can't create file in Session.Capture"
+		End
+	End If
+	Sleep(2000)
+	Session.Send Chr(13)
+	'Wait until <CR> to continue shows up on screen which happens at the end of ref pending list
+	Session.StringWait.MatchStringExact "** END **"	 
+	Session.StringWait.Start
+	Session.EndCapture
+	Set LockSession = Nothing
+End Sub
+
+Sub CAPTURE_QUEST
+    '! Macro created on Tuesday Feb 19, 2019.
+    '  To use an existing macro, select "Macro/Use Existing Macro" from the Macro
+    '  Editor menu.
+    CurDate = Now()
+    FileName = "C:\Users\" & Mid$(Environ$(37), 10, Len(Environ$(37))) & "\Documents\QUEST PENDING LIST " & Month(CurDate) & "-" & Day(CurDate) & ".txt"
+	'set prompt to ask if file already exists
+	Session.CaptureFileHandling = smlPROMPTOVAPP
+	'create return value for session
+	Dim retVal as Boolean 
+	
+	'Open reference send out list starting from main screen
+
+	Session.Send "2" + Chr(13)
+	Session.Send "4" + Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)
+	Session.Send "0" + Chr(13)
+	Session.Send "QUEST" + Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)
+	Session.Send "Y" + Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)
+	Session.Send Chr(13)	
+	Session.Send Chr(13)
+
+	'hopefully start recording
+	Dim LockSession as Object
+	Set LockSession = Session.LockStep
+	LockSession.Start
+	retVal = Session.Capture(FileName)
+	If retVal = FALSE Then
+		Session.Echo "Error: Can't create file in Session.Capture"
+		End
+	End If
+	Sleep(2000)
+	Session.Send Chr(13)
+	'Wait until <CR> to continue shows up on screen which happens at the end of ref pending list
+	Session.StringWait.MatchStringExact "** END **"	 
+	Session.StringWait.Start
+	Session.EndCapture
+	Set LockSession = Nothing
+
+End Sub
+
+
+Sub MORNING_ROUTINE
+    '! Macro recorded on Monday Jul 22, 2019.
+
+    Dim nContinue as Integer
+    Dim nTimeOut as Integer
+
+    ' The default timeout for each command is 3 minutes.
+    ' Increase this value if your host requires more time
+    ' for each command.
+    nTimeOut = 180
+
+    Dim LockStep As Object
+    Set LockStep = Session.LockStep
+    LockStep.Start
+
+    While (Circuit.Connected = False)
+    Wend
+
+    Session.Send "2" + chr(13)
+    Session.Send "4" + chr(13)
+    Session.Send chr(13)
+    Session.Send chr(13)
+    Session.Send "1" + chr(13)
+    Session.Send "ARIOSA" + chr(13)
+    Session.Send chr(13)
+    Session.Send "AMBRY" + chr(13)
+    Session.Send chr(13)
+    Session.Send "MAYO63" + chr(13)
+    Session.Send chr(13)
+    Session.Send "DEMO" + chr(13)
+    Session.Send chr(13)
+    Session.Send "MERCY" + chr(13)
+    Session.Send chr(13)
+    Session.Send chr(13)
+    Session.Send "Y" + chr(13)
+    Session.Send chr(13)
+    Session.Send chr(13)
+    Session.Send chr(13)
+    Session.Send chr(13)
+
+    Set LockStep = Nothing
+
+End Sub
