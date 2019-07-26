@@ -18,4 +18,4 @@ Where month and day are the digits of the month and day. No leading zeros.
 For example the pending list for July 26th would be "REFERENCE PENDING LIST 7-26.txt"
 
 
-An accompanying SmarTerm macro is used to create this list. See UserVT.stm or in [Text format](https://0bin.net/paste/W46-C#wVSK8K0LcfpwN1opncV7E2RAI-JPkoISPiie0slujtKgD3Fk3S)
+An accompanying SmarTerm macro is used to create this list. See UserVT.stm or in [Text format](https://0bin.net/paste/W46-CwVSK8K0Lcfp#wN1opncV7E2R+AI-JPko++iSPiie0slujtKgD3Fk3+S)
