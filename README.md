@@ -9,8 +9,8 @@ The UserVT.stm file needs to be placed in "C:\Users\\(user)\Documents\SmarTerm\M
 
 # Instructions  
 This program works in two steps.  
-* First acquire the pending list as a text file. This is done via a SmarTerm macro.   
-* Second use that text file to generate a spreadsheet.
+* First: Acquire the pending list as a text file. This is done via the SmarTerm macro.   
+* Second: Use that text file to generate a spreadsheet.
 
 Part 1) Get the text file:  
 Sign into Antrim and go to the Main Menu. Run macro "CAPTURE_PEND_LIST".
