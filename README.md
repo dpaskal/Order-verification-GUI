@@ -30,7 +30,7 @@ The macro will do all of this for you. You are encouraged to run the macro sever
 
 In [Text format](https://0bin.net/paste/W46-CwVSK8K0Lcfp#wN1opncV7E2R+AI-JPko++iSPiie0slujtKgD3Fk3+S), the macro is essentially a visual basic script. It needs to be placed inside UserVT.stm and put in the Documents\SmarTerm\Macros folder for SmarTerm to read it.  
 Several other macros exist.  
-"CAPTURE_SEND_OUT_LIST" - Puts the Send-out Pending list into a text file.
-"CAPTURE_TS_QUEST" - Puts the TS QUEST worklist (0 delay) into a text file.
-"CAPTURE_QUEST" - Puts the QUEST worklist (0 delay) into a text file.
+"CAPTURE_SEND_OUT_LIST" - Puts the Send-out Pending list into a text file.  
+"CAPTURE_TS_QUEST" - Puts the TS QUEST worklist (0 delay) into a text file.  
+"CAPTURE_QUEST" - Puts the QUEST worklist (0 delay) into a text file.  
 "MORNING_ROUTINE" - Puts several worklists on the screen. They are: ARIOSA, AMBRY, MAYO63, MERCY, DEMO.
