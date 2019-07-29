@@ -1,8 +1,8 @@
-#!usr/bin/python3
+#!usr/bin/python
 
 import time
 import os, sys, datetime, re
-from PySide2.QtWidgets import (QApplication, QWidget, QTableWidget, 
+from PySide2.QtWidgets import (QApplication, QWidget, QTableWidget,
                                QTableWidgetItem, QVBoxLayout, qApp,
                                QAbstractItemView, QLabel, QPushButton,
                                QHBoxLayout, QLineEdit, QErrorMessage)
@@ -66,7 +66,7 @@ def process(filename):
     """
     Argument is the text file we are processing.
     Return 2D array of all accessions.
-    order_list[i][worklist, accession, tests, doc]
+    order_list[i][worklist, accession, tests, doc, name]
     """
     worklist, tests = "", ""
     order_list = []
@@ -154,13 +154,14 @@ def main():
             self.le = QLineEdit()
             self.le.setObjectName("Filter")
             self.le.setPlaceholderText("Filter")
+            self.le.setToolTip('Enter text to filter the pending list')
             self.le.setMaximumWidth(200)
             self.le.returnPressed.connect(self.filter_accessions)
 
         def createButton(self):
             # Create "Filter Accessions" button.
             self.button = QPushButton('Filter', self)
-            self.button.setToolTip('Filters the accessions by any matches.')
+            self.button.setToolTip('Filters the accessions by text matches.')
             self.button.setMaximumWidth(60)
             self.button.clicked.connect(self.filter_accessions)
 
