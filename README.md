@@ -6,8 +6,6 @@ This program produces a spreadsheet-like table. Its only purpose is to sort and 
 # Setup
 First time set up requires one thing: [The SmarTerm macro.](https://github.com/dpaskal/newpython/blob/master/UserVT.stm)  
 The UserVT.stm file needs to be placed in "C:\Users\\(user)\Documents\SmarTerm\Macros\UserVT.stm"  
-Macro name: "CAPTURE_PEND_LIST"
-
 
 # Instructions  
 This program works in two steps.  
