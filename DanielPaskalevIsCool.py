@@ -2,10 +2,10 @@
 
 import time
 import os, sys, datetime, re
-from PySide2.QtWidgets import (QApplication, QWidget,
-                             QTableWidget, QTableWidgetItem, QVBoxLayout,
-                             QAbstractItemView, QLabel, QPushButton,
-                             QHBoxLayout, QLineEdit, qApp, QErrorMessage)
+from PySide2.QtWidgets import (QApplication, QWidget, QTableWidget, 
+                               QTableWidgetItem, QVBoxLayout, qApp,
+                               QAbstractItemView, QLabel, QPushButton,
+                               QHBoxLayout, QLineEdit, QErrorMessage)
 from PySide2.QtGui import QIcon, QPalette, QColor, QFont
 from PySide2.QtCore import Slot, Qt
 
