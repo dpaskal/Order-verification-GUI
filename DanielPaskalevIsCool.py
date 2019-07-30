@@ -1,6 +1,31 @@
 #!usr/bin/python
 
-import time
+"""
+Daniel Paskalev
+07/30/2019
+dpaskalev@gmail.com
+
+This program is used to *quickly* and *accurately* go through 
+the reference pending list.
+
+To get the pending list it must be a text file in 'My Documents'.
+A SmarTerm macro can do this with its "Capture" functionality
+and the associated macro file is included in github page as 'UserVT.stm'.
+
+Once the text file containing the reference pending list exists, you may run this program.
+Depending on size of the list it will take 10-15 seconds.
+
+The program is a (non-editable) spreadsheet with a line to enter what
+you would like to filter for.
+
+There are 3 buttons:
+
+Filter:  Filters the pending list with what is in the entry line.
+Copy:    Copies all of the current accessions (no duplicates) for pasting into excel.
+Refresh: To be used if you updated the reference pending list.txt. It re-parses the file.
+"""
+
+
 import os, sys, datetime, re
 from PySide2.QtWidgets import (QApplication, QWidget, QTableWidget,
                                QTableWidgetItem, QVBoxLayout, qApp,
@@ -9,7 +34,7 @@ from PySide2.QtWidgets import (QApplication, QWidget, QTableWidget,
 from PySide2.QtGui import QIcon, QPalette, QColor, QFont
 from PySide2.QtCore import Slot, Qt
 
-""" 
+"""
 def merge_accessions(tests):
     " DEPRECATED
     order_list is 2D array where
@@ -39,13 +64,15 @@ def filter_duplicates(accessions):
 
 
 def get_filename():
-    """Return string. Location of today's pending list."""
+    """
+    Uses system date to generate location of today's pending list.
+    """
     month = datetime.datetime.now().strftime("%m")
     day = datetime.datetime.now().strftime("%d")
     # strip leading 0 in month or day
     month = month[1] if month[0] == "0" else month
     day = day[1] if day[0] == "0" else day
-    # get pending list file location. Harded coded to My Documents
+    # get pending list file location. Hard-coded to My Documents
     location = "".join(["C:\\Users\\" + os.getlogin() + "\\Documents\\"
                         "REFERENCE PENDING LIST ", month, "-", day, ".txt"])
     if not os.path.isfile(location):
@@ -54,7 +81,9 @@ def get_filename():
 
 
 def error_dialogue(message):
-    """Create error window with the message given"""
+    """Create error window with the message given.
+    Must be called outside of a Qt instance.
+    """
     error = QApplication([])
     error_dialog = QErrorMessage()
     error_dialog.setWindowTitle("File not found")
@@ -64,8 +93,9 @@ def error_dialogue(message):
 
 def process(filename):
     """
-    Argument is the text file we are processing.
-    Return 2D array of all accessions.
+    This function parses the reference pending list.
+    Argument is the location + text file we are parsing.
+    Return 2D array of all accessions in the format:
     order_list[i][worklist, accession, tests, doc, name]
     """
     worklist, tests = "", ""
@@ -130,6 +160,7 @@ def main():
             self.createButton()
             self.createCopyButton()
             self.createRefreshButton()
+            # self.createMergeButton()
             self.createLe()
             # Create vertical box layout and horizontal box layout,
             # add label, button, to hbox,
@@ -142,12 +173,12 @@ def main():
             self.hbox.addWidget(self.button)
             self.hbox.addWidget(self.copyButton)
             self.hbox.addWidget(self.refreshButton)
+            # self.hbox.addWidget(self.mergeButton)
             self.layout.addLayout(self.hbox)
             self.layout.addWidget(self.tableWidget)
             self.setLayout(self.layout)
             # Show widget
             self.show()
-            print(time.process_time())
 
         def createLe(self):
             # Create user input box for filter.
@@ -177,6 +208,12 @@ def main():
             self.refreshButton.setToolTip('Refresh table with new pending list.')
             self.refreshButton.setMaximumWidth(60)
             self.refreshButton.clicked.connect(self.on_refresh)
+
+        # def createMergeButton(self):
+        #     self.mergeButton = QPushButton('Merge', self)
+        #     self.mergeButton.setToolTip('Merges tests for duplicate accessions')
+        #     self.mergeButton.setMaximumWidth(60)
+        #     self.mergeButton.clicked.connect(self.on_merge)
 
         def createLabel(self):
             # label with general information.
@@ -217,7 +254,7 @@ def main():
 
         @Slot()
         def on_click(self):
-            # double click to put selected item into clipboard
+            # Double click to put selected item into clipboard
             qApp.clipboard().setText(self.tableWidget.selectedItems()[0].text())
 
         @Slot()
@@ -228,10 +265,22 @@ def main():
 
         @Slot()
         def on_copyButton_click(self):
-            # click to copy all accessions into clipboard
+            # Click to copy all accessions into clipboard
             self.cp = [i[1] for i in self.current_tests]
             qApp.clipboard().setText(self.search + ''.join(['\n' +
                                     a for a in filter_duplicates(self.cp)]))
+
+        # @Slot()
+        # def on_merge(self):
+        #     # Merge current accessions to remove situation where multiple tests for
+        #     # the same patient are on multiple worklists.
+        #     # pass
+        #     for i in self.current_tests:
+        #         for j in self.current_tests:
+        #             if j[1] == i[1] and j[2] != i[2]:
+        #                 i[2] += ', ' + j[2]
+        #                 i[0] += ', ' + j[0]
+        #                 self.current_tests.pop(j)  # shoot me in the face
 
         @Slot()
         def filter_accessions(self):
