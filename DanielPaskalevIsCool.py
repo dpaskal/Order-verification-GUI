@@ -23,9 +23,10 @@ There are 3 buttons:
 Filter:  Filters the pending list with what is in the entry line.
 Copy:    Copies all of the current accessions (no duplicates) for pasting into excel.
 Refresh: To be used if you updated the reference pending list.txt. It re-parses the file.
+Merge:   Temporarily merge duplicate accessions who have other tests pending in other worklists.
 """
 
-
+import numpy as np
 import os, sys, datetime, re
 from PySide2.QtWidgets import (QApplication, QWidget, QTableWidget,
                                QTableWidgetItem, QVBoxLayout, qApp,
@@ -35,27 +36,12 @@ from PySide2.QtGui import QIcon, QPalette, QColor, QFont
 from PySide2.QtCore import Slot, Qt
 
 """
-def merge_accessions(tests):
-    " DEPRECATED
-    order_list is 2D array where
-    order_list[i][0] = worklist
-    order_list[i][1] = accession
-    order_list[i][2] = tests
-    order_list[i][3] = doc
-    order_list[i][4] = name
-    "
-    # merge duplicate worklists for same accessions
-    # DEPRECATED BECAUSE LISTS PASS BY REFERENCE
-    temp = tests[:][:]
-    for i in temp:
-        for j in temp:
-            if j[1] == i[1] and j[2] != i[2]:
-                i[2] += ', ' + j[2]
-                i[0] += ', ' + j[0]
-                tempx = list(temp)
-                tempx.remove(j)  # shoot me in the face
-                temp = tuple(tempx)
-    return temp
+order_list is 2D array where
+order_list[i][0] = worklist
+order_list[i][1] = accession
+order_list[i][2] = tests
+order_list[i][3] = doc
+order_list[i][4] = name
  """
 
 def filter_duplicates(accessions):
@@ -96,7 +82,11 @@ def process(filename):
     This function parses the reference pending list.
     Argument is the location + text file we are parsing.
     Return 2D array of all accessions in the format:
-    order_list[i][worklist, accession, tests, doc, name]
+    order_list[i][0] = worklist
+    order_list[i][1] = accession
+    order_list[i][2] = tests
+    order_list[i][3] = doc
+    order_list[i][4] = name
     """
     worklist, tests = "", ""
     order_list = []
@@ -160,7 +150,7 @@ def main():
             self.createButton()
             self.createCopyButton()
             self.createRefreshButton()
-            # self.createMergeButton()
+            self.createMergeButton()
             self.createLe()
             # Create vertical box layout and horizontal box layout,
             # add label, button, to hbox,
@@ -173,7 +163,7 @@ def main():
             self.hbox.addWidget(self.button)
             self.hbox.addWidget(self.copyButton)
             self.hbox.addWidget(self.refreshButton)
-            # self.hbox.addWidget(self.mergeButton)
+            self.hbox.addWidget(self.mergeButton)
             self.layout.addLayout(self.hbox)
             self.layout.addWidget(self.tableWidget)
             self.setLayout(self.layout)
@@ -204,16 +194,18 @@ def main():
             self.copyButton.clicked.connect(self.on_copyButton_click)
 
         def createRefreshButton(self):
+            # Re-acquire the ref pending list.
             self.refreshButton = QPushButton('Refresh', self)
             self.refreshButton.setToolTip('Refresh table with new pending list.')
             self.refreshButton.setMaximumWidth(60)
             self.refreshButton.clicked.connect(self.on_refresh)
 
-        # def createMergeButton(self):
-        #     self.mergeButton = QPushButton('Merge', self)
-        #     self.mergeButton.setToolTip('Merges tests for duplicate accessions')
-        #     self.mergeButton.setMaximumWidth(60)
-        #     self.mergeButton.clicked.connect(self.on_merge)
+        def createMergeButton(self):
+            # Merge the currently showing accessions.
+            self.mergeButton = QPushButton('Merge', self)
+            self.mergeButton.setToolTip('Merges tests for duplicate accessions')
+            self.mergeButton.setMaximumWidth(60)
+            self.mergeButton.clicked.connect(self.on_merge)
 
         def createLabel(self):
             # label with general information.
@@ -268,19 +260,36 @@ def main():
             # Click to copy all accessions into clipboard
             self.cp = [i[1] for i in self.current_tests]
             qApp.clipboard().setText(self.search + ''.join(['\n' +
-                                    a for a in filter_duplicates(self.cp)]))
+                                     a for a in filter_duplicates(self.cp)]))
 
-        # @Slot()
-        # def on_merge(self):
-        #     # Merge current accessions to remove situation where multiple tests for
-        #     # the same patient are on multiple worklists.
-        #     # pass
-        #     for i in self.current_tests:
-        #         for j in self.current_tests:
-        #             if j[1] == i[1] and j[2] != i[2]:
-        #                 i[2] += ', ' + j[2]
-        #                 i[0] += ', ' + j[0]
-        #                 self.current_tests.pop(j)  # shoot me in the face
+        @Slot()
+        def on_merge(self):
+            # Merge current accessions to remove situation where multiple tests for
+            # the same patient are on multiple worklists.
+            temp_tests = np.asarray(self.current_tests)
+
+            for i in range(len(temp_tests)):
+                for j in range(i + 1, len(temp_tests)):
+                    if temp_tests[i][1] == temp_tests[j][1] and temp_tests[i][2] != temp_tests[j][2]:
+                        temp_tests[i][2] += ', ' + temp_tests[j][2]
+                        temp_tests[i][0] += ', ' + temp_tests[j][0]
+                        # temp_tests = np.delete(temp_tests, j, 0)
+                        temp_tests[j][4] = "Delete"
+            # now delete the ones marked for deletion
+            temp_tests = [x for x in temp_tests if x[4] != "Delete"]
+
+            self.tableWidget.clearContents()
+            self.tableWidget.setRowCount(len(temp_tests))
+            self.tableWidget.setColumnCount(5)
+            for i in range(len(temp_tests)):
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(temp_tests[i][1]))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(temp_tests[i][4]))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(temp_tests[i][3]))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(temp_tests[i][0]))
+                self.tableWidget.setItem(i, 4, QTableWidgetItem(temp_tests[i][2]))
+            self.tableWidget.resizeRowsToContents()  # resize height to fit tests
+            self.label.setText("Double click entry to copy | Order count: " +
+                                str(len(temp_tests)))
 
         @Slot()
         def filter_accessions(self):
