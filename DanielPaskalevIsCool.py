@@ -269,7 +269,7 @@ def main():
             for i in range(len(temp_tests)):
                 for j in range(i + 1, len(temp_tests)):
                     if temp_tests[i][1] == temp_tests[j][1] and temp_tests[i][2] != temp_tests[j][2]:
-                        temp_tests[i][2] += ', ' + temp_tests[j][2]
+                        temp_tests[i][2] += ' + ' + temp_tests[j][2]
                         temp_tests[i][0] += ', ' + temp_tests[j][0]
                         temp_tests[j][4] = "Delete"
             # now delete the ones marked for deletion
