@@ -18,7 +18,7 @@ Depending on size of the list it will take 10-15 seconds.
 The program is a (non-editable) spreadsheet with a line to enter what
 you would like to filter for.
 
-There are 3 buttons:
+There are 4 buttons:
 
 Filter:  Filters the pending list with what is in the entry line.
 Copy:    Copies all of the current accessions (no duplicates) for pasting into excel.
@@ -26,8 +26,8 @@ Refresh: To be used if you updated the reference pending list.txt. It re-parses 
 Merge:   Temporarily merge duplicate accessions who have other tests pending in other worklists.
 """
 
-import numpy as np
 import os, sys, datetime, re
+from numpy import asarray
 from PySide2.QtWidgets import (QApplication, QWidget, QTableWidget,
                                QTableWidgetItem, QVBoxLayout, qApp,
                                QAbstractItemView, QLabel, QPushButton,
@@ -126,7 +126,6 @@ def process(filename):
 def main():
     test = get_filename()  # To create error_dialog outside of App.
     class App(QWidget):
-        # resized = pyqtSignal()
         def __init__(self):
             super().__init__()
             self.setWindowIcon(QIcon('icon.ico'))
@@ -137,7 +136,6 @@ def main():
             self.current_tests = process(get_filename())
             self.original_tests = process(get_filename())
             self.search = ""
-            # self.resized.connect(self.resizedSlot)
             self.initUI()
 
         def initUI(self):
@@ -266,14 +264,13 @@ def main():
         def on_merge(self):
             # Merge current accessions to remove situation where multiple tests for
             # the same patient are on multiple worklists.
-            temp_tests = np.asarray(self.current_tests)
+            temp_tests = asarray(self.current_tests)
 
             for i in range(len(temp_tests)):
                 for j in range(i + 1, len(temp_tests)):
                     if temp_tests[i][1] == temp_tests[j][1] and temp_tests[i][2] != temp_tests[j][2]:
                         temp_tests[i][2] += ', ' + temp_tests[j][2]
                         temp_tests[i][0] += ', ' + temp_tests[j][0]
-                        # temp_tests = np.delete(temp_tests, j, 0)
                         temp_tests[j][4] = "Delete"
             # now delete the ones marked for deletion
             temp_tests = [x for x in temp_tests if x[4] != "Delete"]
@@ -314,13 +311,6 @@ def main():
             # self.tableWidget.resizeColumnsToContents()  # no need to resize column twice
             self.label.setText("Double click entry to copy | Order count: " +
                                 str(len(self.current_tests)))
-
-        # def resizeEvent(self, event):
-        #     self.resized.emit()
-        #     return super(App, self).resizeEvent(event)
-
-        # def resizedSlot(self):
-        #     self.tableWidget.resizeRowsToContents()
 
     app = QApplication(sys.argv)
     # Force the style to be the same on all OSs:
