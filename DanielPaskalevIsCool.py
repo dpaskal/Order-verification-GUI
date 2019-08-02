@@ -27,7 +27,7 @@ Merge:   Temporarily merge duplicate accessions who have other tests pending in 
 """
 
 import os, sys, datetime, re
-from numpy import asarray
+import numpy as np
 from PySide2.QtWidgets import (QApplication, QWidget, QTableWidget,
                                QTableWidgetItem, QVBoxLayout, qApp,
                                QAbstractItemView, QLabel, QPushButton,
@@ -97,7 +97,7 @@ def process(filename):
                 worklist = line[9:].strip().split('/', 1)[0]
             if re.match(r'[A-Z][A-Z]\d\d\d\d\d\d', line[12:20]):
                 # collect accession
-                name = line[28:47]
+                name = line[28:47].strip()
                 doc = line[64:69]
                 accession = line[12:21].strip()
                 if accession[-1:] == '(':
@@ -217,6 +217,7 @@ def main():
         def createTable(self):
             # Create table with accession info.
             self.tableWidget = QTableWidget()
+            self.tableWidget.clicked.connect(self.on_click)
             self.tableWidget.clearContents()
             self.tableWidget.setRowCount(len(self.current_tests))
             self.tableWidget.setColumnCount(5)
@@ -240,7 +241,7 @@ def main():
             self.tableWidget.setWordWrap(True)
             self.tableWidget.move(0, 0)
             # table selection change
-            self.tableWidget.doubleClicked.connect(self.on_click)
+            
 
         @Slot()
         def on_click(self):
@@ -264,17 +265,44 @@ def main():
         def on_merge(self):
             # Merge current accessions to remove situation where multiple tests for
             # the same patient are on multiple worklists.
-            temp_tests = asarray(self.current_tests)
+            self.tableWidget.setSortingEnabled(False)
+            temp_tests = np.asarray(self.current_tests)
 
-            for i in range(len(temp_tests)):
-                for j in range(i + 1, len(temp_tests)):
-                    if temp_tests[i][1] == temp_tests[j][1] and temp_tests[i][2] != temp_tests[j][2]:
-                        temp_tests[i][2] += ' + ' + temp_tests[j][2]
-                        temp_tests[i][0] += ', ' + temp_tests[j][0]
-                        temp_tests[j][4] = "Delete"
+            # i = 0
+            # while i < len(temp_tests):
+            # # for i in range(len(temp_tests)):
+            #     j = i + 1
+            #     while j < len(temp_tests):
+            #     # for j in range(i + 1, len(temp_tests)):
+            #         if temp_tests[i][1] == temp_tests[j][1] and temp_tests[i][4] == temp_tests[j][4]:
+            #             temp_tests[i][2] += ' + ' + temp_tests[j][2]
+            #             temp_tests[i][0] += ', ' + temp_tests[j][0]
+            #             # temp_tests = np.delete(temp_tests[J], )
+            #         j += 1
+            #     i += 1
+
+            # Aglorithm to merge duplicate accessions.
+            # First sort by accession alphabetically.
+            temp_tests = temp_tests[np.argsort(temp_tests[:, 1])]
+            temp_tests = temp_tests.tolist()
+            result = []
+            i = 0
+            length = len(temp_tests) - 1
+            while i < length:
+                if temp_tests[i][1] == temp_tests[i+1][1]:
+                    temp_tests[i][0] += ', ' + temp_tests[i+1][0]
+                    temp_tests[i][2] += ' + ' + temp_tests[i+1][2]
+                    del temp_tests[i+1]
+                    length -= 1
+                else:
+                    result.append(temp_tests[i])
+                    i += 1
+            result.append(temp_tests[-1])  # add the last accession that we miss
+            temp_tests = result
+
             # now delete the ones marked for deletion
-            temp_tests = [x for x in temp_tests if x[4] != "Delete"]
-
+            # temp_tests = [x for x in temp_tests if x[1].endswith("D")]
+            
             self.tableWidget.clearContents()
             self.tableWidget.setRowCount(len(temp_tests))
             self.tableWidget.setColumnCount(5)
@@ -285,12 +313,15 @@ def main():
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(temp_tests[i][0]))
                 self.tableWidget.setItem(i, 4, QTableWidgetItem(temp_tests[i][2]))
             self.tableWidget.resizeRowsToContents()  # resize height to fit tests
+            # self.tableWidget.resizeColumnsToContents()
             self.label.setText("Double click entry to copy | Order count: " +
                                 str(len(temp_tests)))
+            self.tableWidget.setSortingEnabled(True)
 
         @Slot()
         def filter_accessions(self):
             # Button / Return pressed to filter the orders.
+            self.tableWidget.setSortingEnabled(False)
             self.search = self.le.text().upper()
             self.current_tests = [a for a in self.original_tests if
                                   self.search in a[0] or
@@ -311,6 +342,7 @@ def main():
             # self.tableWidget.resizeColumnsToContents()  # no need to resize column twice
             self.label.setText("Double click entry to copy | Order count: " +
                                 str(len(self.current_tests)))
+            self.tableWidget.setSortingEnabled(True)
 
     app = QApplication(sys.argv)
     # Force the style to be the same on all OSs:
