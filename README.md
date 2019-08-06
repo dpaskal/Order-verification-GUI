@@ -1,4 +1,4 @@
-# newpython
+# Reference Pending List Table
 ![license](https://img.shields.io/github/license/dpaskal/newpython?style=plastic "License")  
 
 This program produces a spreadsheet-like table. Its only purpose is to sort, filter, and merge duplicates in the pending list.  
@@ -10,8 +10,8 @@ The UserVT.stm file needs to be placed in "C:\Users\\(user)\Documents\SmarTerm\M
 
 # Instructions  
 This program works in two steps.  
-* First: Acquire the pending list as a text file. This is done via the SmarTerm macro.   
-* Second: Use that text file to generate a spreadsheet.
+* First: Acquire the pending list using the SmarTerm macro.  
+* Second: Run the program.
 
 Part 1) Get the text file:  
 Sign into Antrim and go to the Main Menu. Run macro "CAPTURE_PEND_LIST".
