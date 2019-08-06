@@ -176,7 +176,7 @@ if __name__ == '__main__':
             self.le.setPlaceholderText("Filter")
             self.le.setToolTip('Enter text to filter the pending list')
             self.le.setMaximumWidth(200)
-            self.le.returnPressed.connect(self.filter_accessions)
+            self.le.returnPressed.connect(self.filter_accessions)  # Enter pressed
 
         def createButton(self):
             # Create "Filter Accessions" button.
@@ -218,7 +218,7 @@ if __name__ == '__main__':
         def createTable(self):
             # Create table with accession info.
             self.tableWidget = QTableWidget()
-            self.tableWidget.clicked.connect(self.on_click)  #SIGNAL
+            self.tableWidget.clicked.connect(self.on_click)  # If cell is clicked, copy.
             self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
             self.tableWidget.setWordWrap(True)
             self.tableWidget.setColumnCount(5)
