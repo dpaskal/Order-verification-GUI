@@ -45,7 +45,7 @@ order_list[i][3] = doc
 order_list[i][4] = name
  """
 
-def filter_duplicates(accessions):
+def filter_dups(accessions):
     """Removes duplicate accessions from a list of accessions."""
     return list(dict.fromkeys(accessions))
 
@@ -259,25 +259,16 @@ if __name__ == '__main__':
             # Click to copy all accessions into clipboard
             self.cp = [i[1] for i in self.current_tests]
             qApp.clipboard().setText(self.search + ''.join(['\n' +
-                                     a for a in filter_duplicates(self.cp)]))
+                                     a for a in filter_dups(self.cp)]))
 
         @Slot()
         def on_merge(self):
             # Merge current accessions to remove situation where multiple tests for
             # the same patient are on multiple worklists.
             self.tableWidget.setSortingEnabled(False)
-            self.mergeButton.setDown(True)  # Click down merge button
             # Aglorithm to merge duplicate accessions.
-            # First sort by accession alphabetically. 'stable' is timsort.
-            # temp_tests = np.asarray(self.current_tests)
-            # temp_tests = temp_tests[np.argsort(temp_tests[:, 1], axis=-1, kind='stable')]
-            # temp_tests = temp_tests.tolist()
-
             temp_tests = deepcopy(self.current_tests)  # DEEEEPcopy
             temp_tests.sort(key=lambda x: x[1])  # Sort by accession number
-
-            # temp_tests = sorted(self.current_tests.copy(), key=lambda x: x[1])
-
             result = []
             i = 0
             # Compare the current accession to the next to see if duplicate.
@@ -293,8 +284,8 @@ if __name__ == '__main__':
                     result.append(temp_tests[i])
                     i += 1
             result.append(temp_tests[-1])  # add the last accession that we missed.
-            # temp_tests = result
 
+            # Re-create table with 'result'
             self.tableWidget.clearContents()
             self.tableWidget.setRowCount(len(result))
             self.tableWidget.setColumnCount(5)
@@ -309,6 +300,7 @@ if __name__ == '__main__':
             self.label.setText("Double click entry to copy | Order count: " +
                                 str(len(result)))
             self.tableWidget.setSortingEnabled(True)
+            self.mergeButton.setDown(True)  # Click down merge button
 
         @Slot()
         def filter_accessions(self):
