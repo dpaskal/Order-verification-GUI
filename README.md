@@ -1,6 +1,7 @@
 # newpython
+![license](https://img.shields.io/github/license/dpaskal/newpython?style=plastic "License")  
 
-This program produces a spreadsheet-like table. Its only purpose is to sort and filter the pending list.  
+This program produces a spreadsheet-like table. Its only purpose is to sort, filter, and merge duplicates in the pending list.  
 <sub><sup>No longer needing to print 200-500 pages of paper is a plus.</sup></sub>
 
 # Setup
