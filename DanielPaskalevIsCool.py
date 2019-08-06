@@ -219,8 +219,8 @@ if __name__ == '__main__':
             # Create table with accession info.
             self.tableWidget = QTableWidget()
             self.tableWidget.clicked.connect(self.on_click)  #SIGNAL
-            self.tableWidget.clearContents()
-            self.tableWidget.setRowCount(len(self.current_tests))
+            self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
+            self.tableWidget.setWordWrap(True)
             self.tableWidget.setColumnCount(5)
             self.tableWidget.setHorizontalHeaderLabels(["Accession",
                                                         "Name",
@@ -229,19 +229,28 @@ if __name__ == '__main__':
                                                         "Pending Tests"])
             self.tableWidget.horizontalHeader().setStretchLastSection(True)
             self.tableWidget.horizontalHeaderItem(4).setTextAlignment(Qt.AlignLeft)
-            for i in range(len(self.current_tests)):
-                self.tableWidget.setItem(i, 0, QTableWidgetItem(self.current_tests[i][1]))
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(self.current_tests[i][4]))
-                self.tableWidget.setItem(i, 2, QTableWidgetItem(self.current_tests[i][3]))
-                self.tableWidget.setItem(i, 3, QTableWidgetItem(self.current_tests[i][0]))
-                self.tableWidget.setItem(i, 4, QTableWidgetItem(self.current_tests[i][2]))
-            self.tableWidget.resizeColumnsToContents()  # resize columns only once.
-            self.tableWidget.resizeRowsToContents()     # widen height to fit tests
-            self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
-            self.tableWidget.setSortingEnabled(True)
-            self.tableWidget.setWordWrap(True)
+            self.populateTable(self.current_tests)      # Populate table with data
+            self.tableWidget.resizeColumnsToContents()  # Resize columns only once.
+            self.tableWidget.resizeRowsToContents()     # Resize height to fit tests.
             self.tableWidget.move(0, 0)
             # table selection change
+
+        def populateTable(self, orderList):
+            # Re-populate table with argument 'orderList'
+            self.tableWidget.setSortingEnabled(False)
+            self.tableWidget.clearContents()
+            self.tableWidget.setRowCount(len(orderList))
+            for i in range(len(orderList)):
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(orderList[i][1]))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(orderList[i][4]))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(orderList[i][3]))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(orderList[i][0]))
+                self.tableWidget.setItem(i, 4, QTableWidgetItem(orderList[i][2]))
+            self.tableWidget.resizeRowsToContents()  # Resize height to fit tests
+            # self.tableWidget.resizeColumnsToContents()
+            self.label.setText("Double click entry to copy | Order count: " +
+                                str(len(orderList)))
+            self.tableWidget.setSortingEnabled(True)
 
         @Slot()
         def on_click(self):
@@ -250,7 +259,7 @@ if __name__ == '__main__':
 
         @Slot()
         def on_refresh(self):
-            # Refresh button clicked to re-create qtablewidget with new pending list.
+            # Refresh button clicked to re-create table with new pending list.
             self.original_tests = process(get_filename())
             self.filter_accessions()
 
@@ -275,31 +284,18 @@ if __name__ == '__main__':
             length = len(temp_tests) - 1
             while i < length:
                 if temp_tests[i][1] == temp_tests[i+1][1]:
-                    # If duplicate, add worklist and tests to first accesion.
+                    # If duplicates, add worklist and tests to first accesion.
                     temp_tests[i][0] += ', ' + temp_tests[i+1][0]
                     temp_tests[i][2] += ' ||| ' + temp_tests[i+1][2]
                     del temp_tests[i+1]  # Delete second accession.
-                    length -= 1  # Shorten loop length.
-                else:
+                    length -= 1
+                else:  # If current and next accession numbers don't match
                     result.append(temp_tests[i])
                     i += 1
             result.append(temp_tests[-1])  # add the last accession that we missed.
 
             # Re-create table with 'result'
-            self.tableWidget.clearContents()
-            self.tableWidget.setRowCount(len(result))
-            self.tableWidget.setColumnCount(5)
-            for i in range(len(result)):
-                self.tableWidget.setItem(i, 0, QTableWidgetItem(result[i][1]))
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(result[i][4]))
-                self.tableWidget.setItem(i, 2, QTableWidgetItem(result[i][3]))
-                self.tableWidget.setItem(i, 3, QTableWidgetItem(result[i][0]))
-                self.tableWidget.setItem(i, 4, QTableWidgetItem(result[i][2]))
-            self.tableWidget.resizeRowsToContents()  # resize height to fit tests
-            # self.tableWidget.resizeColumnsToContents()
-            self.label.setText("Double click entry to copy | Order count: " +
-                                str(len(result)))
-            self.tableWidget.setSortingEnabled(True)
+            self.populateTable(result)
             self.mergeButton.setDown(True)  # Click down merge button
 
         @Slot()
@@ -314,20 +310,7 @@ if __name__ == '__main__':
                                   self.search in a[2] or
                                   self.search in a[3] or
                                   self.search in a[4]]
-            self.tableWidget.clearContents()
-            self.tableWidget.setRowCount(len(self.current_tests))
-            self.tableWidget.setColumnCount(5)
-            for i in range(len(self.current_tests)):
-                self.tableWidget.setItem(i, 0, QTableWidgetItem(self.current_tests[i][1]))
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(self.current_tests[i][4]))
-                self.tableWidget.setItem(i, 2, QTableWidgetItem(self.current_tests[i][3]))
-                self.tableWidget.setItem(i, 3, QTableWidgetItem(self.current_tests[i][0]))
-                self.tableWidget.setItem(i, 4, QTableWidgetItem(self.current_tests[i][2]))
-            self.tableWidget.resizeRowsToContents()  # resize height to fit tests
-            # self.tableWidget.resizeColumnsToContents()  # no need to resize column twice
-            self.label.setText("Double click entry to copy | Order count: " +
-                                str(len(self.current_tests)))
-            self.tableWidget.setSortingEnabled(True)
+            self.populateTable(self.current_tests)
 
     app = QApplication(sys.argv)
     # Force the style to be the same on all OSs:
