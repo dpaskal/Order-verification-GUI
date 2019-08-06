@@ -26,8 +26,9 @@ Refresh: To be used if you updated the reference pending list.txt. It re-parses 
 Merge:   Temporarily merge duplicate accessions who have other tests pending in other worklists.
 """
 
+from copy import deepcopy
 import os, sys, datetime, re
-import numpy as np
+# import numpy as np
 from PySide2.QtWidgets import (QApplication, QWidget, QTableWidget,
                                QTableWidgetItem, QVBoxLayout, qApp,
                                QAbstractItemView, QLabel, QPushButton,
@@ -123,7 +124,7 @@ def process(filename):
     return order_list
 
 
-def main():
+if __name__ == '__main__':
     test = get_filename()  # To create error_dialog outside of App.
     class App(QWidget):
         def __init__(self):
@@ -217,7 +218,7 @@ def main():
         def createTable(self):
             # Create table with accession info.
             self.tableWidget = QTableWidget()
-            self.tableWidget.clicked.connect(self.on_click)
+            self.tableWidget.clicked.connect(self.on_click)  #SIGNAL
             self.tableWidget.clearContents()
             self.tableWidget.setRowCount(len(self.current_tests))
             self.tableWidget.setColumnCount(5)
@@ -235,13 +236,12 @@ def main():
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(self.current_tests[i][0]))
                 self.tableWidget.setItem(i, 4, QTableWidgetItem(self.current_tests[i][2]))
             self.tableWidget.resizeColumnsToContents()  # resize columns only once.
-            self.tableWidget.resizeRowsToContents()  # widen height to fit tests
+            self.tableWidget.resizeRowsToContents()     # widen height to fit tests
             self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
             self.tableWidget.setSortingEnabled(True)
             self.tableWidget.setWordWrap(True)
             self.tableWidget.move(0, 0)
             # table selection change
-            
 
         @Slot()
         def on_click(self):
@@ -266,62 +266,55 @@ def main():
             # Merge current accessions to remove situation where multiple tests for
             # the same patient are on multiple worklists.
             self.tableWidget.setSortingEnabled(False)
-            temp_tests = np.asarray(self.current_tests)
-
-            # i = 0
-            # while i < len(temp_tests):
-            # # for i in range(len(temp_tests)):
-            #     j = i + 1
-            #     while j < len(temp_tests):
-            #     # for j in range(i + 1, len(temp_tests)):
-            #         if temp_tests[i][1] == temp_tests[j][1] and temp_tests[i][4] == temp_tests[j][4]:
-            #             temp_tests[i][2] += ' + ' + temp_tests[j][2]
-            #             temp_tests[i][0] += ', ' + temp_tests[j][0]
-            #             # temp_tests = np.delete(temp_tests[J], )
-            #         j += 1
-            #     i += 1
-
+            self.mergeButton.setDown(True)  # Click down merge button
             # Aglorithm to merge duplicate accessions.
-            # First sort by accession alphabetically.
-            temp_tests = temp_tests[np.argsort(temp_tests[:, 1])]
-            temp_tests = temp_tests.tolist()
+            # First sort by accession alphabetically. 'stable' is timsort.
+            # temp_tests = np.asarray(self.current_tests)
+            # temp_tests = temp_tests[np.argsort(temp_tests[:, 1], axis=-1, kind='stable')]
+            # temp_tests = temp_tests.tolist()
+
+            temp_tests = deepcopy(self.current_tests)  # DEEEEPcopy
+            temp_tests.sort(key=lambda x: x[1])  # Sort by accession number
+
+            # temp_tests = sorted(self.current_tests.copy(), key=lambda x: x[1])
+
             result = []
             i = 0
+            # Compare the current accession to the next to see if duplicate.
             length = len(temp_tests) - 1
             while i < length:
                 if temp_tests[i][1] == temp_tests[i+1][1]:
+                    # If duplicate, add worklist and tests to first accesion.
                     temp_tests[i][0] += ', ' + temp_tests[i+1][0]
-                    temp_tests[i][2] += ' + ' + temp_tests[i+1][2]
-                    del temp_tests[i+1]
-                    length -= 1
+                    temp_tests[i][2] += ' ||| ' + temp_tests[i+1][2]
+                    del temp_tests[i+1]  # Delete second accession.
+                    length -= 1  # Shorten loop length.
                 else:
                     result.append(temp_tests[i])
                     i += 1
-            result.append(temp_tests[-1])  # add the last accession that we miss
-            temp_tests = result
+            result.append(temp_tests[-1])  # add the last accession that we missed.
+            # temp_tests = result
 
-            # now delete the ones marked for deletion
-            # temp_tests = [x for x in temp_tests if x[1].endswith("D")]
-            
             self.tableWidget.clearContents()
-            self.tableWidget.setRowCount(len(temp_tests))
+            self.tableWidget.setRowCount(len(result))
             self.tableWidget.setColumnCount(5)
-            for i in range(len(temp_tests)):
-                self.tableWidget.setItem(i, 0, QTableWidgetItem(temp_tests[i][1]))
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(temp_tests[i][4]))
-                self.tableWidget.setItem(i, 2, QTableWidgetItem(temp_tests[i][3]))
-                self.tableWidget.setItem(i, 3, QTableWidgetItem(temp_tests[i][0]))
-                self.tableWidget.setItem(i, 4, QTableWidgetItem(temp_tests[i][2]))
+            for i in range(len(result)):
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(result[i][1]))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(result[i][4]))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem(result[i][3]))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem(result[i][0]))
+                self.tableWidget.setItem(i, 4, QTableWidgetItem(result[i][2]))
             self.tableWidget.resizeRowsToContents()  # resize height to fit tests
             # self.tableWidget.resizeColumnsToContents()
             self.label.setText("Double click entry to copy | Order count: " +
-                                str(len(temp_tests)))
+                                str(len(result)))
             self.tableWidget.setSortingEnabled(True)
 
         @Slot()
         def filter_accessions(self):
             # Button / Return pressed to filter the orders.
             self.tableWidget.setSortingEnabled(False)
+            self.mergeButton.setDown(False)  # Unclick merge button
             self.search = self.le.text().upper()
             self.current_tests = [a for a in self.original_tests if
                                   self.search in a[0] or
@@ -365,7 +358,3 @@ def main():
     app.setPalette(palette)
     ex = App()
     sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()
