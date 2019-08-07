@@ -32,7 +32,8 @@ import os, sys, datetime, re
 from PySide2.QtWidgets import (QApplication, QWidget, QTableWidget,
                                QTableWidgetItem, QVBoxLayout, qApp,
                                QAbstractItemView, QLabel, QPushButton,
-                               QHBoxLayout, QLineEdit, QErrorMessage)
+                               QHBoxLayout, QLineEdit, QErrorMessage,
+                               QFileDialog, QAction, QMenuBar)
 from PySide2.QtGui import QIcon, QPalette, QColor, QFont
 from PySide2.QtCore import Slot, Qt
 
@@ -151,12 +152,16 @@ if __name__ == '__main__':
             self.createRefreshButton()
             self.createMergeButton()
             self.createLe()
+            self.createMenuBox()
             # Create vertical box layout and horizontal box layout,
             # add label, button, to hbox,
             # add hbox to vbox,
             # and add table to vbox.
             self.layout = QVBoxLayout()
+            self.layout.setContentsMargins(0,5,0,0)
+            # self.layout.setSpacing(0)
             self.hbox = QHBoxLayout()
+            self.hbox.addWidget(self.menuBar)
             self.hbox.addWidget(self.label)
             self.hbox.addWidget(self.le)
             self.hbox.addWidget(self.button)
@@ -216,7 +221,7 @@ if __name__ == '__main__':
             self.label.setAlignment(Qt.AlignCenter)
 
         def createTable(self):
-            # Create table with accession info.
+            # Initialize table with proper attributes. Then populateTable.
             self.tableWidget = QTableWidget()
             self.tableWidget.clicked.connect(self.on_click)  # If cell is clicked, copy.
             self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # no edit
@@ -232,7 +237,8 @@ if __name__ == '__main__':
             self.populateTable(self.current_tests)      # Populate table with data
             self.tableWidget.resizeColumnsToContents()  # Resize columns only once.
             self.tableWidget.resizeRowsToContents()     # Resize height to fit tests.
-            self.tableWidget.move(0, 0)
+            self.tableWidget.resizeRowsToContents()
+            # self.tableWidget.move(0, 0)     # No idea
             # table selection change
 
         def populateTable(self, orderList):
@@ -251,6 +257,25 @@ if __name__ == '__main__':
             self.label.setText("Double click entry to copy | Order count: " +
                                 str(len(orderList)))
             self.tableWidget.setSortingEnabled(True)
+
+        def createMenuBox(self):
+            # Menu bar at the top of the window.
+            self.menuBar = QMenuBar()
+            self.fileMenu = self.menuBar.addMenu('File')
+            self.open_action = QAction('Open', self)
+            self.exit_action = QAction('Exit', self)
+            self.open_action.triggered.connect(self.open)
+            self.exit_action.triggered.connect(app.quit())  # just quit
+            self.fileMenu.addAction(self.open_action)
+            self.fileMenu.addAction(self.exit_action)
+
+        @Slot()
+        def open(self):
+            fname = QFileDialog.getOpenFileName(self, 'Open File', os.path.expanduser('~/Documents'),
+                                                'Text Files (*.txt)')
+            if fname[0]:
+                self.original_tests = process(fname[0])
+                self.filter_accessions()
 
         @Slot()
         def on_click(self):
@@ -311,6 +336,7 @@ if __name__ == '__main__':
                                   self.search in a[3] or
                                   self.search in a[4]]
             self.populateTable(self.current_tests)
+
 
     app = QApplication(sys.argv)
     # Force the style to be the same on all OSs:
