@@ -17,7 +17,14 @@ Part 1) Get the text file:
 Sign into Antrim and go to the Main Menu. Run macro "CAPTURE_PEND_LIST".
 
 Part 2) Generate the spreadsheet:  
-Run DanielPaskalev.exe. Give it 10-15 seconds to load up depending on the size of the pending list. 
+Run DanielPaskalev.exe. Give it 10-15 seconds to load up depending on the size of the pending list.  
+
+There are 4 buttons:
+
+    Filter:  Filters the pending list with what is typed into the entry line.  
+    Copy:    Copies all of the current accessions (no duplicates) for pasting into excel.  
+    Refresh: To be used if you updated the reference pending list.txt. It re-parses the file.  
+    Merge:   Temporarily merge duplicate accessions who have other tests pending in other worklists.
 
 # Details
 
