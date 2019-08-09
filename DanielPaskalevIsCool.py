@@ -13,14 +13,14 @@ A SmarTerm macro can do this with its "Capture" functionality
 and the associated macro file is included in github page as 'UserVT.stm'.
 
 Once the text file containing the reference pending list exists, you may run this program.
-Depending on size of the list it will take 10-15 seconds.
+It could take 15-30 seconds to initialize on slow machines.
 
 The program is a (non-editable) spreadsheet with a line to enter what
 you would like to filter for.
 
 There are 4 buttons:
 
-Filter:  Filters the pending list with what is in the entry line.
+Filter:  Filters the pending list with what is typed into the entry line.
 Copy:    Copies all of the current accessions (no duplicates) for pasting into excel.
 Refresh: To be used if you updated the reference pending list.txt. It re-parses the file.
 Merge:   Temporarily merge duplicate accessions who have other tests pending in other worklists.
@@ -143,15 +143,14 @@ if __name__ == '__main__':
         def initUI(self):
             # self.is_button_clicked = False
             self.setWindowTitle(self.title)
-            # self.setGeometry(self.left, self.top, self.width, self.height)
             self.setWindowState(Qt.WindowMaximized)
             self.createLabel()
+            self.createLe()
             self.createTable()
             self.createButton()
             self.createCopyButton()
             self.createRefreshButton()
             self.createMergeButton()
-            self.createLe()
             self.createMenuBox()
             # Create vertical box layout and horizontal box layout,
             # add label, button, to hbox,
@@ -237,9 +236,6 @@ if __name__ == '__main__':
             self.populateTable(self.current_tests)      # Populate table with data
             self.tableWidget.resizeColumnsToContents()  # Resize columns only once.
             self.tableWidget.resizeRowsToContents()     # Resize height to fit tests.
-            self.tableWidget.resizeRowsToContents()
-            # self.tableWidget.move(0, 0)     # No idea
-            # table selection change
 
         def populateTable(self, orderList):
             # Re-populate table with argument 'orderList'
