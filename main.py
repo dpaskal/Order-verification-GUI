@@ -1,5 +1,5 @@
 #!usr/bin/python
-
+ 
 """
 Daniel Paskalev
 07/30/2019
